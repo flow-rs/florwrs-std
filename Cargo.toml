@@ -1,6 +1,6 @@
 [package]
 name = "flowrs-std"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["wuermseer.florian@gmail.com", "markus.friedrich@hm.edu"]
 description = "A standard library for the flowrs library."
@@ -18,5 +18,5 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 flowrs = "0.1.0"
-flowrs-derive = "0.1.0"
+flowrs-derive = "0.2.0"
 serde_json = "1.0.104"

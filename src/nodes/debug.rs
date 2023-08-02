@@ -1,5 +1,6 @@
 use std::{any::Any, fmt::Debug, rc::Rc};
 
+use flowrs_derive::Connectable;
 use serde_json::Value;
 
 use flowrs::{
@@ -7,6 +8,7 @@ use flowrs::{
     node::{Node, State, UpdateError, Context},
 };
 
+#[derive(Connectable)]
 pub struct DebugNode<I>
 where
     I: Clone,
@@ -16,7 +18,9 @@ where
     _props: Value,
     _context: State<Context>,
 
+    #[input]
     pub input: Input<I>,
+    #[output]
     pub output: Output<I>,
 }
 
@@ -56,21 +60,5 @@ where
             self.output.clone().send(input).unwrap();
         }
         Ok(())
-    }
-}
-
-impl<I: Clone + 'static> RuntimeConnectable for DebugNode<I> {
-    fn input_at(&self, index: usize) -> Rc<dyn Any> {
-        match index {
-            0 => Rc::new(self.input.clone()),
-            _ => panic!("Intex out of bounds for DebugNode"),
-        }
-    }
-
-    fn output_at(&self, index: usize) -> Rc<dyn Any> {
-        match index {
-            0 => Rc::new(self.output.clone()),
-            _ => panic!("Intex out of bounds for DebugNode"),
-        }
     }
 }

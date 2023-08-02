@@ -4,9 +4,11 @@ use flowrs::{
     connection::{Output, RuntimeConnectable},
     node::{State, UpdateError, Node},
 };
+use flowrs_derive::Connectable;
 
 use flowrs::node::Context;
 
+#[derive(Connectable)]
 pub struct BasicNode<I>
 where
     I: Clone,
@@ -16,6 +18,7 @@ where
     props: I,
     _context: State<Context>,
 
+    #[output]
     pub output: Output<I>,
 }
 
@@ -55,21 +58,5 @@ where
 
     fn update(&self) -> Result<(), UpdateError> {
         Ok(())
-    }
-}
-
-impl<I: Clone + 'static> RuntimeConnectable for BasicNode<I> {
-    fn input_at(&self, _: usize) -> Rc<dyn Any> {
-        panic!("Index out of bounds for BasicNode")
-    }
-
-    fn output_at(&self, index: usize) -> Rc<dyn Any> {
-        match index {
-            0 => {
-                let re = self.output.clone();
-                Rc::new(re)
-            }
-            _ => panic!("Intex out of bounds for BasicNode"),
-        }
     }
 }
