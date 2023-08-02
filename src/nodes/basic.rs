@@ -1,12 +1,11 @@
 use std::{any::Any, fmt::Debug, rc::Rc};
 
-use crate::{
+use flowrs::{
     connection::{Output, RuntimeConnectable},
-    node::{State, UpdateError},
-    nodes::node::Node,
+    node::{State, UpdateError, Node},
 };
 
-use super::node::Context;
+use flowrs::node::Context;
 
 pub struct BasicNode<I>
 where

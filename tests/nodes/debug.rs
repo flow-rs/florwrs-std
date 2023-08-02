@@ -1,10 +1,7 @@
 #[cfg(test)]
 mod nodes {
-    use flow::{
-        connection::{connect, ConnectError, Edge},
-        debug::DebugNode,
-        node::{Context, Node, State},
-    };
+    use flowrs_std::debug::DebugNode;
+    use flowrs::{connection::{ConnectError, Edge, connect}, node::{Context, State, Node}};
     use serde_json::Value;
 
     #[test]

@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod nodes {
-    use flow::{
-        basic::BasicNode,
+    use flowrs::{
         connection::{connect, ConnectError, Edge},
         node::{Context, Node, State},
     };
+    use flowrs_std::basic::BasicNode;
 
     #[test]
     fn should_send_on_ready() -> Result<(), ConnectError<i32>> {

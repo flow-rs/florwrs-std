@@ -2,12 +2,13 @@ use std::any::Any;
 use std::ops::Add;
 use std::rc::Rc;
 
-use flow_derive::Connectable;
 use serde_json::Value;
 
-use super::node::{Context, Node};
-use crate::connection::{Input, Output, RuntimeConnectable};
-use crate::node::{SequenceError, State, UpdateError};
+use flowrs::{
+    connection::{Input, Output, RuntimeConnectable},
+    node::{Context, Node, SequenceError, State, UpdateError},
+};
+use flowrs_derive::Connectable;
 
 #[derive(Clone)]
 enum AddNodeState<I1, I2> {
@@ -111,8 +112,6 @@ where
 
     // To be replaced by macro
     fn update(&self) -> Result<(), UpdateError> {
-
-
         if let Ok(i1) = self.input_1.next_elem() {
             println!("UPDATE1");
             self.handle_1(i1)?;

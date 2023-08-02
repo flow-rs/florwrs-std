@@ -1,16 +1,16 @@
 #[cfg(test)]
 mod nodes {
-    use flow::app_state::FlowType;
-    use flow::connection::ConnectError;
-    use flow::job::Connectable;
-    use flow::job::Context;
-    use flow::job::Job;
+    use flowrs_std::app_state::FlowType;
+    use flowrs_std::connection::ConnectError;
+    use flowrs_std::job::Connectable;
+    use flowrs_std::job::Context;
+    use flowrs_std::job::Job;
     use std::rc::Rc;
     use std::sync::Mutex;
     use std::sync::mpsc::{channel, Receiver, Sender};
     use std::sync::Arc;
 
-    use flow::add::AddNode;
+    use flowrs_std::add::AddNode;
 
     /// Test scenario:
     ///

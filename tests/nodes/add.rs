@@ -1,13 +1,13 @@
 #[cfg(test)]
 mod nodes {
-    use flow::connection::{connect, ConnectError, Edge, Input, Output, RuntimeConnectable};
-    use flow::node::{Context, Node, State};
+    use flowrs::connection::{connect, ConnectError, Edge, Input, Output, RuntimeConnectable};
+    use flowrs::node::{Context, Node, State};
+    use flowrs_std::add::AddNode;
     use serde_json::Value;
     use std::any::Any;
     use std::rc::Rc;
     use std::{thread, vec};
 
-    use flow::add::AddNode;
 
     #[test]
     fn should_add_132() -> Result<(), ConnectError<i32>> {

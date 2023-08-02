@@ -2,13 +2,10 @@ use std::{any::Any, fmt::Debug, rc::Rc};
 
 use serde_json::Value;
 
-use crate::{
+use flowrs::{
     connection::{Input, Output, RuntimeConnectable},
-    node::{State, UpdateError},
-    nodes::node::Node,
+    node::{Node, State, UpdateError, Context},
 };
-
-use super::node::Context;
 
 pub struct DebugNode<I>
 where
