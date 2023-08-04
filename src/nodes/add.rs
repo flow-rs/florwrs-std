@@ -6,7 +6,7 @@ use serde_json::Value;
 
 use flowrs::{
     connection::{Input, Output, RuntimeConnectable},
-    node::{Context, Node, SequenceError, State, UpdateError},
+    node::{ChangeObserver, Context, Node, State, InitError, ShutdownError, ReadyError, UpdateError}
 };
 use flowrs_derive::Connectable;
 
@@ -25,8 +25,6 @@ where
 {
     name: String,
     state: State<AddNodeState<I1, I2>>,
-    _props: Value,
-    _context: State<Context>,
 
     #[input]
     pub input_1: Input<I1>,
@@ -42,16 +40,13 @@ where
     I2: Clone + Send + 'static,
     O: Clone + Send + 'static,
 {
-    pub fn new(name: &str, context: State<Context>, props: Value) -> Self {
+    pub fn new(name: &str, change_observer: &ChangeObserver) -> Self {
         Self {
             name: name.into(),
             state: State::new(AddNodeState::None),
-            _props: props,
-            _context: context.clone(),
-
             input_1: Input::new(),
             input_2: Input::new(),
-            output_1: Output::new(context.clone()),
+            output_1: Output::new(change_observer),
         }
     }
 
@@ -59,10 +54,10 @@ where
         let mut state = self.state.0.lock().unwrap();
         match state.clone() {
             AddNodeState::I1(_) => {
-                return Err(UpdateError::SequenceError(SequenceError {
+                return Err(UpdateError::SequenceError {
                     node: self.name().into(),
                     message: "Addition should happen pairwise.".into(),
-                }))
+                })
             }
             AddNodeState::I2(i) => {
                 let out = v + i.clone();
@@ -78,10 +73,10 @@ where
         let mut state = self.state.0.lock().unwrap();
         match state.clone() {
             AddNodeState::I2(_) => {
-                return Err(UpdateError::SequenceError(SequenceError {
+                return Err(UpdateError::SequenceError {
                     node: self.name().into(),
                     message: "Addition should happen pairwise.".into(),
-                }))
+                })
             }
             AddNodeState::I1(i) => {
                 let out = i.clone() + v;
@@ -100,11 +95,17 @@ where
     I2: Clone + Send + 'static,
     O: Clone + Send + 'static,
 {
-    fn on_init(&self) {}
+    fn on_init(&self) -> Result<(), InitError>{ 
+        Ok(())
+    }
 
-    fn on_ready(&self) {}
+    fn on_ready(&self)   -> Result<(), ReadyError>{
+        Ok(())
+    }
 
-    fn on_shutdown(&self) {}
+    fn on_shutdown(&self)  -> Result<(), ShutdownError> {
+        Ok(())
+    }
 
     fn name(&self) -> &str {
         &self.name

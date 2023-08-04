@@ -1,15 +1,15 @@
 #[cfg(test)]
 mod nodes {
     use flowrs_std::debug::DebugNode;
-    use flowrs::{connection::{ConnectError, Edge, connect}, node::{Context, State, Node}};
-    use serde_json::Value;
+    use flowrs::{connection::{ConnectError, Edge, connect}, node::{ChangeObserver, State, Node}};
 
     #[test]
     fn should_add_132() -> Result<(), ConnectError<i32>> {
-        let context = State::new(Context::new());
+        let change_observer: ChangeObserver = ChangeObserver::new(); 
+
         let mock_output = Edge::new();
-        let fst = DebugNode::new("AddNodeI32", context.clone(), Value::Null);
-        let snd = DebugNode::new("AddNodeI32", context, Value::Null);
+        let fst = DebugNode::new("AddNodeI32", &change_observer);
+        let snd = DebugNode::new("AddNodeI32", &change_observer);
         connect(fst.output.clone(), snd.input.clone());
         connect(snd.output.clone(), mock_output.clone());
         let _ = fst.input.send(1);

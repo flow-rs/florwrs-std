@@ -2,14 +2,14 @@
 mod nodes {
     use flowrs::{
         connection::{connect, ConnectError, Edge},
-        node::{Context, Node, State},
+        node::{ChangeObserver, Node, State},
     };
-    use flowrs_std::basic::BasicNode;
+    use flowrs_std::value::ValueNode;
 
     #[test]
     fn should_send_on_ready() -> Result<(), ConnectError<i32>> {
-        let context = State::new(Context::new());
-        let node = BasicNode::new("My Node", context, 42);
+        let change_observer: ChangeObserver = ChangeObserver::new(); 
+        let node = ValueNode::new("My Node", &change_observer, 42);
         let mock_output = Edge::new();
         connect(node.output.clone(), mock_output.clone());
         node.on_ready();

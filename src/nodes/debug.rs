@@ -1,11 +1,9 @@
 use std::{any::Any, fmt::Debug, rc::Rc};
 
 use flowrs_derive::Connectable;
-use serde_json::Value;
-
 use flowrs::{
     connection::{Input, Output, RuntimeConnectable},
-    node::{Node, State, UpdateError, Context},
+    node::{Node, UpdateError, InitError, ShutdownError, ReadyError, ChangeObserver},
 };
 
 #[derive(Connectable)]
@@ -14,9 +12,6 @@ where
     I: Clone,
 {
     name: String,
-    _state: State<Option<I>>,
-    _props: Value,
-    _context: State<Context>,
 
     #[input]
     pub input: Input<I>,
@@ -28,14 +23,11 @@ impl<I> DebugNode<I>
 where
     I: Clone,
 {
-    pub fn new(name: &str, context: State<Context>, props: Value) -> Self {
+    pub fn new(name: &str, change_observer: &ChangeObserver) -> Self {
         Self {
             name: name.into(),
-            _state: State::new(None),
-            _props: props,
-            _context: context.clone(),
             input: Input::new(),
-            output: Output::new(context.clone()),
+            output: Output::new(change_observer),
         }
     }
 }
@@ -44,11 +36,17 @@ impl<I> Node for DebugNode<I>
 where
     I: Clone + Debug + Send + 'static,
 {
-    fn on_init(&self) {}
+    fn on_init(&self) -> Result<(), InitError>{ 
+        Ok(())
+    }
 
-    fn on_ready(&self) {}
+    fn on_ready(&self)   -> Result<(), ReadyError>{
+        Ok(())
+    }
 
-    fn on_shutdown(&self) {}
+    fn on_shutdown(&self)  -> Result<(), ShutdownError> {
+        Ok(())
+    }
 
     fn name(&self) -> &str {
         &self.name
@@ -56,7 +54,8 @@ where
 
     fn update(&self) -> Result<(), UpdateError> {
         if let Ok(input) = self.input.next_elem() {
-            println!("{:?}", input);
+            println!("{:?} {:?} DEBUG", std::thread::current().id(),input);
+
             self.output.clone().send(input).unwrap();
         }
         Ok(())
