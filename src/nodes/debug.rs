@@ -55,8 +55,13 @@ where
     fn update(&self) -> Result<(), UpdateError> {
         if let Ok(input) = self.input.next_elem() {
             println!("{:?} {:?} DEBUG", std::thread::current().id(),input);
+            #[cfg(target_arch = "wasm32")]
+            log(format!("{:?} {:?} DEBUG", std::thread::current().id(),input).as_str());
 
-            self.output.clone().send(input).unwrap();
+            match self.output.clone().send(input) {
+                Ok(_) => (),
+                Err(_) => return Err(UpdateError::ConnectError { node: self.name.clone(), message: "Failed to send".into() }),
+            };
         }
         Ok(())
     }

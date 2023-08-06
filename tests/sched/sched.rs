@@ -1,12 +1,17 @@
-use flowrs::{node::{ ChangeObserver, Node, InitError, ReadyError, ShutdownError, UpdateError}};
-use flowrs::connection::{Input, Output};
+use flowrs::node::{ ChangeObserver, Node, InitError, ReadyError, ShutdownError, UpdateError};
+use flowrs::connection::{Input, Output, RuntimeConnectable};
+use flowrs_derive::Connectable;
+use std::{rc::Rc, any::Any};
 
 use std::fs::File;
 
+#[derive(Connectable)]
 pub struct DummyNode {
     name: String,
 
+    #[input]
     pub input_1: Input<i32>,
+    #[output]
     pub output_1: Output<i32>,
     err_on_init: bool
 }
@@ -51,9 +56,8 @@ impl Node for DummyNode {
 #[cfg(test)]
 mod sched {
     
-    use flowrs::{executor::{Executor, MultiThreadedExecutor}, scheduler::{RoundRobinScheduler}, node::{Context, State, ChangeObserver, InitError, ReadyError, ShutdownError, UpdateError}, flow::Flow, version::Version};
-    use flowrs::connection::{connect, Edge, Input};
-    use serde_json::Value;
+    use flowrs::{executor::{Executor, MultiThreadedExecutor}, scheduler::RoundRobinScheduler, node::ChangeObserver, flow::Flow, version::Version};
+    use flowrs::connection::{connect, Input};
 
     use std::{thread, sync::mpsc, time::Duration};
     use crate::sched::sched::DummyNode;
@@ -70,7 +74,7 @@ mod sched {
         connect(n1.output_1.clone(), mock_input.clone());
 
 
-        let mut flow = Flow::new("flow_1", Version::new(1,0,0));
+        let mut flow = Flow::new("flow_1", Version::new(1,0,0), vec![]);
 
         n1.input_1.send(1);
       
@@ -113,7 +117,7 @@ mod sched {
 
        let n1: DummyNode = DummyNode::new("node_1", &change_observer, true);
        let n2: DummyNode = DummyNode::new("node_2", &change_observer, true);
-       let mut flow = Flow::new("flow_1", Version::new(1,0,0));
+       let mut flow = Flow::new("flow_1", Version::new(1,0,0), vec![]);
       
        flow.add_node(n1);
        flow.add_node(n2);
