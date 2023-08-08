@@ -1,9 +1,7 @@
-use flowrs::{node::{Node, State, ChangeObserver, InitError, ReadyError, ShutdownError, UpdateError}, connection::{RuntimeConnectable, Input, Output}};
-use flowrs_derive::{Connectable};
+use flowrs::{node::{Node, ChangeObserver, InitError, ReadyError, ShutdownError, UpdateError}, connection::{Input, Output}};
+use flowrs_derive::RuntimeConnectable;
 
 use std::thread;
-use std::any::Any;
-use std::rc::Rc;
 use std::sync::{Condvar, Mutex, Arc};
 use core::time::Duration;
 
@@ -92,7 +90,7 @@ impl Timer {
 }
 
 
-#[derive(Connectable)]
+#[derive(RuntimeConnectable)]
 pub struct TimerNode<T>
 {
     name: String,

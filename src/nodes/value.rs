@@ -1,13 +1,11 @@
-use std::{any::Any, rc::Rc};
-
 use flowrs::{
-    connection::{Output, RuntimeConnectable},
+    connection::{Output},
     node::{ChangeObserver, UpdateError, InitError, ShutdownError, ReadyError, Node},
 };
-use flowrs_derive::Connectable;
+use flowrs_derive::RuntimeConnectable;
 
 
-#[derive(Connectable)]
+#[derive(RuntimeConnectable)]
 pub struct ValueNode<I>
 where
     I: Clone,

@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod nodes {
     use flowrs_std::debug::DebugNode;
-    use flowrs::{connection::{ConnectError, Edge, connect}, node::{ChangeObserver, State, Node}};
+    use flowrs::{connection::{Edge, connect}, node::{ChangeObserver, Node}};
 
     #[test]
-    fn should_add_132() -> Result<(), ConnectError<i32>> {
+    fn should_add_132() -> Result<(), anyhow::Error> {
         let change_observer: ChangeObserver = ChangeObserver::new(); 
 
         let mock_output = Edge::new();

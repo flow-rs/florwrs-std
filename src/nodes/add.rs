@@ -1,12 +1,10 @@
-use std::any::Any;
 use std::ops::Add;
-use std::rc::Rc;
 
 use flowrs::{
-    connection::{Input, Output, RuntimeConnectable},
+    connection::{Input, Output},
     node::{ChangeObserver, InitError, Node, ReadyError, ShutdownError, State, UpdateError},
 };
-use flowrs_derive::Connectable;
+use flowrs_derive::RuntimeConnectable;
 
 #[derive(Clone)]
 enum AddNodeState<I1, I2> {
@@ -15,7 +13,7 @@ enum AddNodeState<I1, I2> {
     None,
 }
 
-#[derive(Connectable)]
+#[derive(RuntimeConnectable)]
 pub struct AddNode<I1, I2, O>
 where
     I1: Clone,

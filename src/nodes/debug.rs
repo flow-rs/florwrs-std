@@ -1,12 +1,12 @@
-use std::{any::Any, fmt::Debug, rc::Rc};
+use std::fmt::Debug;
 
-use flowrs_derive::Connectable;
+use flowrs_derive::RuntimeConnectable;
 use flowrs::{
-    connection::{Input, Output, RuntimeConnectable},
+    connection::{Input, Output},
     node::{Node, UpdateError, InitError, ShutdownError, ReadyError, ChangeObserver},
 };
 
-#[derive(Connectable)]
+#[derive(RuntimeConnectable)]
 pub struct DebugNode<I>
 where
     I: Clone,

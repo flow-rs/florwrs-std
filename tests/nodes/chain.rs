@@ -25,7 +25,7 @@ mod nodes {
     ///  /  \   /  \
     /// s1  s2 s3  s4
     #[test]
-    fn should_chain_homogenious_nodes() -> Result<(), ConnectError<i32>> {
+    fn should_chain_homogenious_nodes() -> Result<(), anyhow::Error> {
         // All 7 edges of the graph
         let (mock_s, mock_r): (Sender<i32>, Receiver<i32>) = channel();
 
