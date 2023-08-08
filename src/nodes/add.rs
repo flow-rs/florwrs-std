@@ -36,9 +36,9 @@ where
 
 impl<I1, I2, O> AddNode<I1, I2, O>
 where
-    I1: Clone + Add<I2, Output = O> + Send + 'static,
-    I2: Clone + Send + 'static,
-    O: Clone + Send + 'static,
+    I1: Clone + Add<I2, Output = O> + Send,
+    I2: Clone + Send,
+    O: Clone + Send,
 {
     pub fn new(name: &str, change_observer: &ChangeObserver) -> Self {
         Self {
@@ -91,28 +91,16 @@ where
 
 impl<I1, I2, O> Node for AddNode<I1, I2, O>
 where
-    I1: Add<I2, Output = O> + Clone + Send + 'static,
-    I2: Clone + Send + 'static,
-    O: Clone + Send + 'static,
+    I1: Add<I2, Output = O> + Clone + Send,
+    I2: Clone + Send,
+    O: Clone + Send,
 {
-    fn on_init(&self) -> Result<(), InitError>{ 
-        Ok(())
-    }
-
-    fn on_ready(&self)   -> Result<(), ReadyError>{
-        Ok(())
-    }
-
-    fn on_shutdown(&self)  -> Result<(), ShutdownError> {
-        Ok(())
-    }
-
     fn name(&self) -> &str {
         &self.name
     }
 
     // To be replaced by macro
-    fn update(&self) -> Result<(), UpdateError> {
+    fn on_update(&self) -> Result<(), UpdateError> {
         if let Ok(i1) = self.input_1.next_elem() {
             println!("UPDATE1");
             self.handle_1(i1)?;

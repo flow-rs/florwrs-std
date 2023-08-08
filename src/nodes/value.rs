@@ -34,28 +34,15 @@ where
 
 impl<I> Node for ValueNode<I>
 where
-    I: Clone + Send + 'static,
+    I: Clone + Send,
 {
-
-    fn on_init(&self) -> Result<(), InitError>{ 
-        Ok(())
-    }
-
     fn on_ready(&self) -> Result<(), ReadyError>{
-        //println!("{:?} VALUE", std::thread::current().id());
+        println!("{:?} VALUE", std::thread::current().id());
         self.output.clone().send(self.value.clone());
-        Ok(())
-    }
-
-    fn on_shutdown(&self)  -> Result<(), ShutdownError> {
         Ok(())
     }
 
     fn name(&self) -> &str {
         &self.name
-    }
-
-    fn update(&self) -> Result<(), UpdateError> {
-        Ok(())
     }
 }

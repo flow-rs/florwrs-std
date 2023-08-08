@@ -13,8 +13,8 @@ mod nodes {
         connect(fst.output.clone(), snd.input.clone());
         connect(snd.output.clone(), mock_output.clone());
         let _ = fst.input.send(1);
-        let _ = fst.update();
-        let _ = snd.update();
+        let _ = fst.on_update();
+        let _ = snd.on_update();
 
         let expected = 1;
         let actual = mock_output.next_elem()?;

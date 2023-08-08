@@ -1,8 +1,13 @@
 use flowrs::{node::{ ChangeObserver, Node, InitError, ReadyError, ShutdownError, UpdateError}};
-use flowrs::connection::{Input, Output};
+use flowrs::connection::{Input, Output, RuntimeConnectable};
+use flowrs_derive::Connectable;
+
+use std::any::Any;
+use std::rc::Rc;
 
 use std::fs::File;
 
+#[derive(Connectable)]
 pub struct DummyNode {
     name: String,
 
@@ -43,7 +48,7 @@ impl Node for DummyNode {
         &self.name
     }
 
-    fn update(&self) -> Result<(), UpdateError> {
+    fn on_update(&self) -> Result<(), UpdateError> {
         Ok(())
     }
 }
@@ -51,7 +56,7 @@ impl Node for DummyNode {
 #[cfg(test)]
 mod sched {
     
-    use flowrs::{executor::{Executor, MultiThreadedExecutor}, scheduler::{RoundRobinScheduler}, node::{Context, State, ChangeObserver, InitError, ReadyError, ShutdownError, UpdateError}, flow::Flow, version::Version};
+    use flowrs::{executor::{Executor, StandardExecutor}, scheduler::{RoundRobinScheduler}, node::{Context, State, ChangeObserver, InitError, ReadyError, ShutdownError, UpdateError}, flow::Flow, version::Version};
     use flowrs::connection::{connect, Edge, Input};
     use serde_json::Value;
 
@@ -70,7 +75,7 @@ mod sched {
         connect(n1.output_1.clone(), mock_input.clone());
 
 
-        let mut flow = Flow::new("flow_1", Version::new(1,0,0));
+        let mut flow = Flow::new("flow_1", Version::new(1,0,0), Vec::new());
 
         n1.input_1.send(1);
       
@@ -80,7 +85,7 @@ mod sched {
         let thread_handle = thread::spawn( move || {
         
             let num_threads = 4;
-            let mut executor = MultiThreadedExecutor::new(num_threads, change_observer);
+            let mut executor = StandardExecutor::new(num_threads, change_observer);
             let mut scheduler = RoundRobinScheduler::new();
 
             let _ = sender.send(executor.controller());
@@ -113,12 +118,12 @@ mod sched {
 
        let n1: DummyNode = DummyNode::new("node_1", &change_observer, true);
        let n2: DummyNode = DummyNode::new("node_2", &change_observer, true);
-       let mut flow = Flow::new("flow_1", Version::new(1,0,0));
+       let mut flow = Flow::new("flow_1", Version::new(1,0,0),Vec::new());
       
        flow.add_node(n1);
        flow.add_node(n2);
 
-       let mut ex = MultiThreadedExecutor::new(1, change_observer);
+       let mut ex = StandardExecutor::new(1, change_observer);
 
        match ex.run(flow, RoundRobinScheduler::new()) {
         Ok(_) => todo!(),

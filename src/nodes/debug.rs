@@ -34,25 +34,14 @@ where
 
 impl<I> Node for DebugNode<I>
 where
-    I: Clone + Debug + Send + 'static,
+    I: Clone + Debug + Send,
 {
-    fn on_init(&self) -> Result<(), InitError>{ 
-        Ok(())
-    }
-
-    fn on_ready(&self)   -> Result<(), ReadyError>{
-        Ok(())
-    }
-
-    fn on_shutdown(&self)  -> Result<(), ShutdownError> {
-        Ok(())
-    }
-
     fn name(&self) -> &str {
         &self.name
     }
 
-    fn update(&self) -> Result<(), UpdateError> {
+    fn on_update(&self) -> Result<(), UpdateError> {
+        println!("{:?} DEBUG BEFORE ", std::thread::current().id());
         if let Ok(input) = self.input.next_elem() {
             println!("{:?} {:?} DEBUG", std::thread::current().id(),input);
 

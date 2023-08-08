@@ -18,8 +18,8 @@ mod nodes {
         connect(add.output_1.clone(), mock_output.clone());
         let _ = add.input_1.send(1);
         let _ = add.input_2.send(2);
-        let _ = add.update();
-        let _ = add.update();
+        let _ = add.on_update();
+        let _ = add.on_update();
 
         let expected = 3;
         let actual = mock_output.next_elem()?;
@@ -47,7 +47,7 @@ mod nodes {
             let _ = add.input_2.send(int);
         });
         (0..100).for_each(|_| {
-            let _ = add.update();
+            let _ = add.on_update();
         });
         let mut actual = vec![];
         for _ in 0..100 {
@@ -84,7 +84,7 @@ mod nodes {
 
         let handle1 = thread::spawn(move || {
             (0..100).for_each(|_| {
-                match add1.update() {
+                match add1.on_update() {
                     Ok(_) => (),
                     Err(e) => println!("{:?}", e),
                 };
@@ -92,7 +92,7 @@ mod nodes {
         });
         let handle2 = thread::spawn(move || {
             (0..100).for_each(|_| {
-                match add2.update() {
+                match add2.on_update() {
                     Ok(_) => (),
                     Err(e) => println!("{:?}", e),
                 };
