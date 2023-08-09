@@ -1,9 +1,7 @@
-use flowrs::{node::{Node, State, ChangeObserver, InitError, ReadyError, ShutdownError, UpdateError, UpdateController}, connection::{RuntimeConnectable, Input, Output}};
+use flowrs::{node::{Node, State, ChangeObserver, InitError, ReadyError, ShutdownError, UpdateError, UpdateController}, connection::{Input, Output}};
 use flowrs_derive::{Connectable};
 
 use std::thread;
-use std::any::Any;
-use std::rc::Rc;
 use std::sync::{Condvar, Mutex, Arc};
 use core::time::Duration;
 

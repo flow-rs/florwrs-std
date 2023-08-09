@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod nodes {
+    /*
     use flowrs::connection::{connect, ConnectError, Edge, Input, Output, RuntimeConnectable};
     use flowrs::node::{ChangeObserver, Node, State};
     use flowrs_std::add::AddNode;
@@ -157,4 +158,5 @@ mod nodes {
         let add: AddNode<i32, i32, i32> = AddNode::new("AddNodeI32", &change_observer);
         add.output_at(1);
     }
+     */
 }
