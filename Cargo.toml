@@ -19,4 +19,5 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 flowrs = {path = "../flowrs"}  # "0.1.0"
 flowrs-derive = {path = "../flowrs/flowrs_derive"}  # "0.2.0"
+serde = "1.0.183"
 serde_json = "1.0.104"
