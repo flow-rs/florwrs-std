@@ -1,9 +1,9 @@
 use flowrs::{connection::{Input}, node::{Node, UpdateError}};
 use flowrs_std::timer::TimerNodeToken;
-use flowrs_derive::Connectable;
-use std::sync::mpsc::{Sender};
+use flowrs_derive::RuntimeConnectable;
+use std::sync::mpsc::Sender;
 
-#[derive(Connectable)]
+#[derive(RuntimeConnectable)]
 pub struct ReportNode {
     pub sender: Sender<TimerNodeToken>,
 

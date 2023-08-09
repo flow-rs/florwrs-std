@@ -1,11 +1,11 @@
 use flowrs::{node::{ ChangeObserver, Node, InitError, ReadyError, ShutdownError, UpdateError}};
 use flowrs::connection::{Input, Output};
-use flowrs_derive::Connectable;
+use flowrs_derive::RuntimeConnectable;
 
 
 use std::fs::File;
 
-#[derive(Connectable)]
+#[derive(RuntimeConnectable)]
 pub struct DummyNode {
     name: String,
 

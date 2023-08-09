@@ -3,10 +3,10 @@ use flowrs::{
     connection::{Output},
     node::{ChangeObserver,  ReadyError, Node},
 };
-use flowrs_derive::Connectable;
+use flowrs_derive::RuntimeConnectable;
 
 
-#[derive(Connectable)]
+#[derive(RuntimeConnectable)]
 pub struct ValueNode<I>
 where
     I: Clone,

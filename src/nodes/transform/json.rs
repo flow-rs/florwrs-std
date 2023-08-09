@@ -1,10 +1,10 @@
 use flowrs::{node::{Node, UpdateError, ChangeObserver}, connection::{Input, Output, connect}};
 
-use flowrs_derive::Connectable;
+use flowrs_derive::RuntimeConnectable;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Connectable)]
+#[derive(RuntimeConnectable)]
 pub struct ToJsonStringNode<T> {
     pub output: Output<String>,
     pub input: Input<T>,
@@ -41,7 +41,7 @@ where T: Serialize + Send {
     }
 }
 
-#[derive(Connectable)]
+#[derive(RuntimeConnectable)]
 pub struct FromJsonStringNode<T> {
     pub output: Output<T>,
     pub input: Input<String>,
