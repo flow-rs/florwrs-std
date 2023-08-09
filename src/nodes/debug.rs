@@ -11,8 +11,6 @@ pub struct DebugNode<I>
 where
     I: Clone,
 {
-    name: String,
-
     #[input]
     pub input: Input<I>,
     #[output]
@@ -23,9 +21,8 @@ impl<I> DebugNode<I>
 where
     I: Clone,
 {
-    pub fn new(name: &str, change_observer: Option<&ChangeObserver>) -> Self {
+    pub fn new(change_observer: Option<&ChangeObserver>) -> Self {
         Self {
-            name: name.into(),
             input: Input::new(),
             output: Output::new(change_observer),
         }
@@ -36,9 +33,6 @@ impl<I> Node for DebugNode<I>
 where
     I: Clone + Debug + Send,
 {
-    fn name(&self) -> &str {
-        &self.name
-    }
 
     fn on_update(&mut self) -> Result<(), UpdateError> {
         //println!("{:?} DEBUG BEFORE ", std::thread::current().id());

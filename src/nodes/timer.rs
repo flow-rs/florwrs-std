@@ -136,7 +136,6 @@ impl TimerStrategy for PollTimer {
 #[derive(Connectable)]
 pub struct TimerNode<T>
 {
-    name: String,
     timer: T,
 
     #[input]
@@ -148,9 +147,8 @@ pub struct TimerNode<T>
 
 impl<T> TimerNode<T>
     where T : TimerStrategy {
-    pub fn new(name: &str, timer: T, change_observer: Option<&ChangeObserver>) -> Self {
+    pub fn new(timer: T, change_observer: Option<&ChangeObserver>) -> Self {
         Self {
-            name: name.into(), 
             config_input: Input::new(), 
             token_output: Output::new(change_observer),
             timer: timer
@@ -160,10 +158,6 @@ impl<T> TimerNode<T>
 
 impl<T> Node for TimerNode<T>
     where T : TimerStrategy + Send {
-
-    fn name(&self) -> &str {
-        &self.name
-    }
 
     fn on_update(&mut self) -> Result<(), UpdateError> {
 

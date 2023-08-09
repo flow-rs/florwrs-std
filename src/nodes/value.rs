@@ -11,7 +11,6 @@ pub struct ValueNode<I>
 where
     I: Clone,
 {
-    name: String,
     value: I,
     
     #[output]
@@ -22,9 +21,8 @@ impl<I> ValueNode<I>
 where
     I: Clone,
 {
-    pub fn new(name: &str, value: I, change_observer: Option<&ChangeObserver>) -> Self {
+    pub fn new(value: I, change_observer: Option<&ChangeObserver>) -> Self {
         Self {
-            name: name.into(),
             value,
             output: Output::new(change_observer),
         }
@@ -37,11 +35,9 @@ where
 {
     fn on_ready(&self) -> Result<(), ReadyError>{
         //println!("{:?} VALUE", std::thread::current().id());
-        self.output.clone().send(self.value.clone());
-        Ok(())
-    }
-
-    fn name(&self) -> &str {
-        &self.name
+        match self.output.clone().send(self.value.clone()) {
+            Err(err) => Err(ReadyError::Other(err.into())),
+            Ok(_) => Ok(())
+        }
     }
 }
