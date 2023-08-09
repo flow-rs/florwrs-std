@@ -36,8 +36,8 @@ mod nodes {
     use std::{thread, time::Duration, sync::mpsc::channel};
         
     use flowrs::{
-        connection::{connect},
-        node::{ChangeObserver},
+        connection::connect,
+        node::ChangeObserver,
         sched::{version::Version, flow::Flow, execution::{Executor, StandardExecutor}, scheduler::RoundRobinScheduler},
     };
 

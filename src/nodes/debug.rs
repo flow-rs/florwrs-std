@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use flowrs_derive::RuntimeConnectable;
 use flowrs::{
     connection::{Input, Output},
-    node::{Node, UpdateError, InitError, ShutdownError, ReadyError, ChangeObserver},
+    node::{Node, UpdateError, ChangeObserver},
 };
 
 #[derive(RuntimeConnectable)]
@@ -43,7 +43,7 @@ where
 
             match self.output.clone().send(input) {
                 Ok(_) => (),
-                Err(_) => return Err(UpdateError::ConnectError { node: self.name.clone(), message: "Failed to send".into() }),
+                Err(_) => return Err(UpdateError::ConnectError { node: "Debug node".into(), message: "Failed to send".into() }),
             };
         }
         Ok(())
