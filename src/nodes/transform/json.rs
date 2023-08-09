@@ -1,4 +1,4 @@
-use flowrs::{node::{Node, UpdateError, ChangeObserver}, connection::{Input, Output}};
+use flowrs::{node::{Node, UpdateError, ChangeObserver}, connection::{Input, Output, connect}};
 
 use flowrs_derive::Connectable;
 
@@ -74,5 +74,60 @@ impl<T> Node for FromJsonStringNode<T>
             }
         }
         Ok(())
+    }
+}
+
+#[test]
+fn test_to_json_and_from_string() {
+    
+    #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+    struct TestStruct {
+        a: i32,
+        b: i32,
+    }
+
+    let inp = TestStruct{a:42, b: -42};
+
+    let mut to_string_node: ToJsonStringNode<TestStruct> = ToJsonStringNode::new(None);
+    let mut from_string_node: FromJsonStringNode<TestStruct> = FromJsonStringNode::new(None);
+
+    let e: flowrs::connection::Edge<TestStruct> = flowrs::connection::Edge::new();
+   
+    connect(to_string_node.output.clone(), from_string_node.input.clone());
+    connect(from_string_node.output.clone(), e.clone());
+    
+    let _ = to_string_node.input.send(inp.clone());
+    
+    let _ = to_string_node.on_update();
+    let _ = from_string_node.on_update();
+
+    let out = e.next_elem().expect("");
+    
+    assert_eq!(out,inp);
+
+}
+
+
+#[test]
+fn test_from_json_string_error() {
+    
+    #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+    struct TestStruct {
+        a: i32,
+        b: i32,
+    }
+    
+    let mut from_string_node: FromJsonStringNode<TestStruct> = FromJsonStringNode::new(None);
+
+    let e: flowrs::connection::Edge<TestStruct> = flowrs::connection::Edge::new();
+   
+    connect(from_string_node.output.clone(), e.clone());
+
+    let _ = from_string_node.input.send("{a:\"TEXT\"}}".to_string());
+
+    let res = from_string_node.on_update();
+    match res {
+        Err(_) => assert!(true),
+        Ok(_) => assert!(false)
     }
 }
