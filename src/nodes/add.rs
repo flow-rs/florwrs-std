@@ -96,7 +96,7 @@ where
     }
 
     // To be replaced by macro
-    fn on_update(&self) -> Result<(), UpdateError> {
+    fn on_update(&mut self) -> Result<(), UpdateError> {
         if let Ok(i1) = self.input_1.next_elem() {
             println!("UPDATE1");
             self.handle_1(i1)?;

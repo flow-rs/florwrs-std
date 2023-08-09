@@ -36,7 +36,7 @@ where
     I: Clone + Send,
 {
     fn on_ready(&self) -> Result<(), ReadyError>{
-        println!("{:?} VALUE", std::thread::current().id());
+        //println!("{:?} VALUE", std::thread::current().id());
         self.output.clone().send(self.value.clone());
         Ok(())
     }

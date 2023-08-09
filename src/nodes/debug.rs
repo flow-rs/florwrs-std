@@ -40,10 +40,10 @@ where
         &self.name
     }
 
-    fn on_update(&self) -> Result<(), UpdateError> {
-        println!("{:?} DEBUG BEFORE ", std::thread::current().id());
+    fn on_update(&mut self) -> Result<(), UpdateError> {
+        //println!("{:?} DEBUG BEFORE ", std::thread::current().id());
         if let Ok(input) = self.input.next_elem() {
-            println!("{:?} {:?} DEBUG", std::thread::current().id(),input);
+            //println!("{:?} {:?} DEBUG", std::thread::current().id(),input);
 
             self.output.clone().send(input).unwrap();
         }

@@ -42,7 +42,7 @@ impl Node for DummyNode {
 #[cfg(test)]
 mod sched {
     
-    use flowrs::{executor::{Executor, StandardExecutor}, scheduler::{RoundRobinScheduler}, node::{Context, State, ChangeObserver, InitError, ReadyError, ShutdownError, UpdateError}, flow::Flow, version::Version};
+    use flowrs::{execution::{Executor, StandardExecutor}, scheduler::{RoundRobinScheduler}, node::{Context, State, ChangeObserver, InitError, ReadyError, ShutdownError, UpdateError}, flow::Flow, version::Version};
     use flowrs::connection::{connect, Edge, Input};
     use serde_json::Value;
 
@@ -112,8 +112,8 @@ mod sched {
        let mut ex = StandardExecutor::new(1, change_observer);
 
        match ex.run(flow, RoundRobinScheduler::new()) {
-        Ok(_) => todo!(),
-        Err(err) => eprintln!("Error: {:?}", err)
+        Ok(_) => assert!(false),
+        Err(_) => assert!(true)
        }
 
     }

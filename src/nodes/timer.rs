@@ -1,8 +1,7 @@
-use flowrs::{node::{Node, State, ChangeObserver, InitError, ReadyError, ShutdownError, UpdateError, UpdateController}, connection::{Input, Output}};
+use flowrs::{node::{Node, ChangeObserver, UpdateError, UpdateController}, connection::{Input, Output}};
 use flowrs_derive::{Connectable};
 
-use std::thread;
-use std::sync::{Condvar, Mutex, Arc};
+use std::{time::SystemTime, thread, sync::{Condvar, Mutex, Arc}};
 use core::time::Duration;
 
 #[derive(Clone)]
@@ -15,8 +14,9 @@ pub struct TimerNodeToken {
 }
 
 pub trait TimerStrategy {
-    fn start<F>(&self, every: Duration, closure: F) where F: 'static + FnMut() + Send;
-    fn update_controller(&self) -> Arc<Mutex<dyn UpdateController>>;
+    fn start<F>(&mut self, every: Duration, closure: F) where F: 'static + FnMut() + Send;
+    fn update(&mut self , _output: &mut Output<TimerNodeToken>) {}
+    fn update_controller(&self) -> Option<Arc<Mutex<dyn UpdateController>>> {None}
 }
 
 struct WaitTimerUpdateController {
@@ -48,7 +48,7 @@ pub struct WaitTimer {
 
 impl TimerStrategy for WaitTimer {
     
-    fn start<F>(&self, every: Duration, mut closure: F)
+    fn start<F>(&mut self, every: Duration, mut closure: F)
     where F: 'static + FnMut() + Send {
 
         let pair = self.cond_var.clone();
@@ -85,8 +85,8 @@ impl TimerStrategy for WaitTimer {
 
     }
 
-    fn update_controller(&self) -> Arc<Mutex<dyn UpdateController>> {
-        Arc::new(Mutex::new(WaitTimerUpdateController::new(self.cond_var.clone())))
+    fn update_controller(&self) -> Option<Arc<Mutex<dyn UpdateController>>> {
+        Some(Arc::new(Mutex::new(WaitTimerUpdateController::new(self.cond_var.clone()))))
     }
 
 }
@@ -96,6 +96,39 @@ impl WaitTimer {
         Self {
             own_thread: own_thread,  
             cond_var: Arc::new((Mutex::new(true), Condvar::new())),
+        }
+    }
+}
+
+pub struct PollTimer {
+    every: Duration,
+    last_tick: SystemTime
+}
+
+impl PollTimer {
+    pub fn new() -> Self {
+        Self {
+            every: Duration::ZERO,//set later
+            last_tick: SystemTime::now()
+        }
+    }
+}
+
+impl TimerStrategy for PollTimer {
+    fn start<F>(&mut self, every: Duration, _closure: F) where F: 'static + FnMut() + Send {
+        self.every = every;
+        self.last_tick = SystemTime::now();
+    }
+
+    fn update(&mut self , output: &mut Output<TimerNodeToken>) {
+        
+        let current_time = SystemTime::now();
+        if let Ok(duration) = current_time.duration_since(self.last_tick) {
+            if duration >= self.every {
+                let _res = output.send(TimerNodeToken {});
+                self.last_tick = current_time;
+                println!("TICK");
+            }
         }
     }
 }
@@ -132,11 +165,9 @@ impl<T> Node for TimerNode<T>
         &self.name
     }
 
-    fn on_update(&self) -> Result<(), UpdateError> {
+    fn on_update(&mut self) -> Result<(), UpdateError> {
 
-        //println!("{:?} TIMER UPDATE 0", std::thread::current().id());
         if let Ok(config) = self.config_input.next_elem() {
-            //println!("{:?} TIMER UPDATE 1", std::thread::current().id());
             
             let mut token_output_clone = self.token_output.clone();
             
@@ -147,10 +178,13 @@ impl<T> Node for TimerNode<T>
                
             });
         }
+
+        self.timer.update(&mut self.token_output);
+
         Ok(())        
     }
 
     fn update_controller(&self) -> Option<Arc<Mutex<dyn UpdateController>>> {
-        Some(self.timer.update_controller())
+        self.timer.update_controller()
     }
 }
