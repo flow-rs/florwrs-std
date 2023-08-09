@@ -115,7 +115,7 @@ pub struct TimerNode<T>
 
 impl<T> TimerNode<T>
     where T : TimerStrategy {
-    pub fn new(name: &str, change_observer: &ChangeObserver, timer: T) -> Self {
+    pub fn new(name: &str, timer: T, change_observer: Option<&ChangeObserver>) -> Self {
         Self {
             name: name.into(), 
             config_input: Input::new(), 

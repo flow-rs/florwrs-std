@@ -23,7 +23,7 @@ impl<I> DebugNode<I>
 where
     I: Clone,
 {
-    pub fn new(name: &str, change_observer: &ChangeObserver) -> Self {
+    pub fn new(name: &str, change_observer: Option<&ChangeObserver>) -> Self {
         Self {
             name: name.into(),
             input: Input::new(),

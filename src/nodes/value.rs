@@ -22,7 +22,7 @@ impl<I> ValueNode<I>
 where
     I: Clone,
 {
-    pub fn new(name: &str, change_observer: &ChangeObserver, value: I) -> Self {
+    pub fn new(name: &str, value: I, change_observer: Option<&ChangeObserver>) -> Self {
         Self {
             name: name.into(),
             value,

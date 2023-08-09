@@ -16,13 +16,13 @@ mod nodes {
       
         let node_1 = ValueNode::new(
             "value_node", 
-            &change_observer, 
-            TimerNodeConfig {duration: core::time::Duration::from_secs(1) }
+            TimerNodeConfig {duration: core::time::Duration::from_secs(1) },
+            Some(&change_observer)            
         );
         
-        let node_2 = TimerNode::new("timer_node", &change_observer, WaitTimer::new(false));
+        let node_2 = TimerNode::new("timer_node", WaitTimer::new(false), Some(&change_observer));
 
-        let node_3 = DebugNode::<TimerNodeToken>::new("debug_node", &change_observer);
+        let node_3 = DebugNode::<TimerNodeToken>::new("debug_node", Some(&change_observer));
 
         let mock_input = Edge::new();
 

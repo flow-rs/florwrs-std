@@ -15,7 +15,7 @@ pub struct DummyNode {
 }
 
 impl DummyNode {
-    pub fn new(name: &str, change_observer: &ChangeObserver, err_on_init: bool) -> Self {
+    pub fn new(name: &str, err_on_init: bool, change_observer: Option<&ChangeObserver>) -> Self {
         Self {
             name: name.into(),
             input_1: Input::new(),
@@ -34,20 +34,8 @@ impl Node for DummyNode {
         Ok(())
     }
 
-    fn on_ready(&self)-> Result<(), ReadyError> {
-        Ok(())
-    }
-
-    fn on_shutdown(&self)-> Result<(), ShutdownError> {
-        Ok(())
-    }
-
     fn name(&self) -> &str {
         &self.name
-    }
-
-    fn on_update(&self) -> Result<(), UpdateError> {
-        Ok(())
     }
 }
 
@@ -68,7 +56,7 @@ mod sched {
         
         let change_observer = ChangeObserver::new();  
 
-        let n1: DummyNode = DummyNode::new("node_1", &change_observer, false);
+        let n1: DummyNode = DummyNode::new("node_1", false, Some(&change_observer));
         let mock_input = Input::<i32>::new();        
         connect(n1.output_1.clone(), mock_input.clone());
 
@@ -114,8 +102,8 @@ mod sched {
 
         let change_observer = ChangeObserver::new();  
 
-       let n1: DummyNode = DummyNode::new("node_1", &change_observer, true);
-       let n2: DummyNode = DummyNode::new("node_2", &change_observer, true);
+       let n1: DummyNode = DummyNode::new("node_1", true, Some(&change_observer));
+       let n2: DummyNode = DummyNode::new("node_2", true, Some(&change_observer));
        let mut flow = Flow::new("flow_1", Version::new(1,0,0),Vec::new());
       
        flow.add_node(n1);

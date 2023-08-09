@@ -36,7 +36,7 @@ where
     I2: Clone + Send,
     O: Clone + Send,
 {
-    pub fn new(name: &str, change_observer: &ChangeObserver) -> Self {
+    pub fn new(name: &str, change_observer: Option<&ChangeObserver>) -> Self {
         Self {
             name: name.into(),
             state: State::new(AddNodeState::None),
