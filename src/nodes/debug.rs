@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use flowrs_derive::RuntimeConnectable;
 use flowrs::{
     connection::{Input, Output},
-    node::{Node, UpdateError, ChangeObserver},
+    node::{Node, UpdateError, InitError, ShutdownError, ReadyError, ChangeObserver},
 };
 
 #[derive(RuntimeConnectable)]
@@ -37,9 +37,14 @@ where
     fn on_update(&mut self) -> Result<(), UpdateError> {
         //println!("{:?} DEBUG BEFORE ", std::thread::current().id());
         if let Ok(input) = self.input.next_elem() {
-            //println!("{:?} {:?} DEBUG", std::thread::current().id(),input);
+            println!("{:?} {:?} DEBUG", std::thread::current().id(),input);
+            #[cfg(target_arch = "wasm32")]
+            log(format!("{:?} {:?} DEBUG", std::thread::current().id(),input).as_str());
 
-            self.output.clone().send(input).unwrap();
+            match self.output.clone().send(input) {
+                Ok(_) => (),
+                Err(_) => return Err(UpdateError::ConnectError { node: self.name.clone(), message: "Failed to send".into() }),
+            };
         }
         Ok(())
     }

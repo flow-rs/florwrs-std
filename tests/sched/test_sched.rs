@@ -1,7 +1,6 @@
-use flowrs::{node::{ ChangeObserver, Node, InitError, ReadyError, ShutdownError, UpdateError}};
+use flowrs::node::{ ChangeObserver, Node, InitError, ReadyError, ShutdownError, UpdateError};
 use flowrs::connection::{Input, Output};
 use flowrs_derive::RuntimeConnectable;
-
 
 use std::fs::File;
 
@@ -9,7 +8,9 @@ use std::fs::File;
 pub struct DummyNode {
     name: String,
 
+    #[input]
     pub input_1: Input<i32>,
+    #[output]
     pub output_1: Output<i32>,
     err_on_init: bool
 }

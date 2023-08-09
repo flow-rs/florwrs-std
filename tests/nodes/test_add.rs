@@ -1,20 +1,19 @@
 #[cfg(test)]
 mod nodes {
-   
-    use flowrs::connection::{connect, ConnectError, Edge, Input, Output, RuntimeConnectable};
-    use flowrs::node::{ChangeObserver, Node, State};
+    use anyhow::Error;
+    use flowrs::connection::{connect, Edge, Input, Output, RuntimeConnectable};
+    use flowrs::node::{ChangeObserver, Node};
     use flowrs_std::add::AddNode;
-    use serde_json::Value;
     use std::any::Any;
     use std::rc::Rc;
     use std::{thread, vec};
 
 
     #[test]
-    fn should_add_132() -> Result<(), ConnectError<i32>> {
+    fn should_add_132() -> Result<(), Error> {
         let change_observer = ChangeObserver::new(); 
         
-        let add = AddNode::new("AddNodeI32", &change_observer);
+        let add: AddNode<i32, i32, i32> = AddNode::new("AddNodeI32", &change_observer);
         let mock_output = Edge::new();
         connect(add.output_1.clone(), mock_output.clone());
         let _ = add.input_1.send(1);
@@ -35,10 +34,10 @@ mod nodes {
     ///         /
     /// [100, 99, ..., 0]
     #[test]
-    fn should_add_multiple_132_sequentially() -> Result<(), ConnectError<i32>> {
+    fn should_add_multiple_132_sequentially() -> Result<(), Error> {
         let change_observer = ChangeObserver::new(); 
 
-        let add = AddNode::new("AddNodeI32", &change_observer);
+        let add: AddNode<i32, i32, i32> = AddNode::new("AddNodeI32", &change_observer);
         let mock_output = Edge::new();
         connect(add.output_1.clone(), mock_output.clone());
         (0..100).for_each(|int| {
@@ -65,7 +64,7 @@ mod nodes {
     }
 
     #[test]
-    fn should_add_multiple_132_parallel() -> Result<(), ConnectError<i32>> {
+    fn should_add_multiple_132_parallel() -> Result<(), Error> {
         let change_observer: ChangeObserver = ChangeObserver::new(); 
 
         let add1 = AddNode::new("AddNodeI32", &change_observer);

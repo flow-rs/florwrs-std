@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use flowrs::{
     connection::{Input, Output},
-    node::{ChangeObserver, Node, State, UpdateError}
+    node::{ChangeObserver, InitError, Node, ReadyError, ShutdownError, State, UpdateError},
 };
 use flowrs_derive::RuntimeConnectable;
 
@@ -58,7 +58,11 @@ where
             AddNodeState::I2(i) => {
                 let out = v + i.clone();
                 *state = AddNodeState::None;
-                let _ = self.output_1.clone().send(out);
+                // TODO replace match statement by ? one error handling is implemented
+                match self.output_1.clone().send(out) {
+                    Ok(_) => (),
+                    Err(_) => return Err(UpdateError::ConnectError { node: self.name.clone(), message: "You attempted to send to an output where no succesor Node is connected.".into() }),
+                };
             }
             AddNodeState::None => *state = AddNodeState::I1(v),
         }
@@ -77,7 +81,11 @@ where
             AddNodeState::I1(i) => {
                 let out = i.clone() + v;
                 *state = AddNodeState::None;
-                let _ = self.output_1.clone().send(out);
+                // TODO replace match statement by ? one error handling is implemented
+                match self.output_1.clone().send(out) {
+                    Ok(_) => (),
+                    Err(_) => return Err(UpdateError::ConnectError { node: self.name.clone(), message: "You attempted to send to an output where no succesor Node is connected.".into() }),
+                };
             }
             AddNodeState::None => *state = AddNodeState::I2(v),
         }

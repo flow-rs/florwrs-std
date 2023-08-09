@@ -3,10 +3,10 @@ mod nodes {
     
     
     use flowrs_std::debug::DebugNode;
-    use flowrs::{nodes::node::{Node, ReceiveError}, connection::{Edge, connect}, node::{ChangeObserver}};
+    use flowrs::{connection::{Edge, connect}, node::{ChangeObserver, Node}};
 
     #[test]
-    fn should_add_132() -> Result<(), ReceiveError>  {
+    fn should_add_132() -> Result<(), anyhow::Error> {
         let change_observer: ChangeObserver = ChangeObserver::new(); 
 
         let mock_output = Edge::new();
