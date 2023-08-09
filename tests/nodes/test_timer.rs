@@ -5,15 +5,15 @@ use std::sync::mpsc::{Sender};
 
 #[derive(Connectable)]
 pub struct ReportNode {
-    name: String,
     pub sender: Sender<TimerNodeToken>,
+
+    #[input]
     pub input: Input<TimerNodeToken>,
 }
 
 impl ReportNode {
-    pub fn new(name: &str, sender: Sender<TimerNodeToken>) -> Self {
+    pub fn new(sender: Sender<TimerNodeToken>) -> Self {
         Self {
-            name: name.into(),
             sender: sender,
             input: Input::new()
         }
@@ -22,10 +22,6 @@ impl ReportNode {
 
 impl Node for ReportNode {
    
-    fn name(&self) -> &str {
-        &self.name
-    }
-
     fn on_update(&mut self) -> Result<(), UpdateError> {
         
         if let Ok(input) = self.input.next_elem() {            
@@ -47,7 +43,7 @@ mod nodes {
 
     use flowrs_std::{value::ValueNode, timer::{TimerNodeConfig, TimerNode, TimerNodeToken, WaitTimer, PollTimer, TimerStrategy}, debug::DebugNode};
     
-    use crate::nodes::timer::ReportNode;
+    use crate::nodes::test_timer::ReportNode;
 
     fn timer_test_with<T: TimerStrategy + Send + 'static>(num_workers: usize, timer: T) {
 
@@ -57,17 +53,16 @@ mod nodes {
         let change_observer: ChangeObserver = ChangeObserver::new(); 
         let (sender, receiver) = channel::<TimerNodeToken>();
         
-        let node_1 = ValueNode::new(
-            "value_node", 
+        let node_1 = ValueNode::new( 
             TimerNodeConfig {duration: core::time::Duration::from_secs(timer_interval_seconds) },
             Some(&change_observer)            
         );
         
-        let node_2 = TimerNode::new("timer_node", timer, Some(&change_observer));
+        let node_2 = TimerNode::new(timer, Some(&change_observer));
 
-        let node_3 = DebugNode::<TimerNodeToken>::new("debug_node", Some(&change_observer));
+        let node_3 = DebugNode::<TimerNodeToken>::new(Some(&change_observer));
 
-        let node_4 = ReportNode::new("report_node", sender);
+        let node_4 = ReportNode::new(sender);
 
         connect(node_1.output.clone(), node_2.config_input.clone());
         connect(node_2.token_output.clone(), node_3.input.clone());

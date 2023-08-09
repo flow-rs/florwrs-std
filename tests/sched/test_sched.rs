@@ -47,7 +47,7 @@ mod sched {
     use serde_json::Value;
 
     use std::{thread, sync::mpsc, time::Duration};
-    use crate::sched::sched::DummyNode;
+    use crate::sched::test_sched::DummyNode;
 
     #[test]
     fn test_executor() {
@@ -63,7 +63,7 @@ mod sched {
 
         let mut flow = Flow::new("flow_1", Version::new(1,0,0), Vec::new());
 
-        n1.input_1.send(1);
+        let _ = n1.input_1.send(1);
       
         
         flow.add_node(n1);
@@ -72,11 +72,11 @@ mod sched {
         
             let num_threads = 4;
             let mut executor = StandardExecutor::new(num_threads, change_observer);
-            let mut scheduler = RoundRobinScheduler::new();
+            let scheduler = RoundRobinScheduler::new();
 
             let _ = sender.send(executor.controller());
 
-            executor.run(flow, scheduler);
+            let _ = executor.run(flow, scheduler);
         });
 
         let controller = receiver.recv().unwrap();
