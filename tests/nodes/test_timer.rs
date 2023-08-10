@@ -33,7 +33,7 @@ impl Node for ReportNode {
 
 #[cfg(test)]
 mod nodes {
-    use std::{thread, time::Duration, sync::mpsc::channel};
+    use std::{thread, time::Duration, sync::mpsc::channel, collections::HashMap};
         
     use flowrs::{
         connection::connect,
@@ -68,11 +68,11 @@ mod nodes {
         connect(node_2.token_output.clone(), node_3.input.clone());
         connect(node_3.output.clone(), node_4.input.clone());
 
-        let mut flow = Flow::new("flow_1", Version::new(1,0,0), Vec::new());
-        flow.add_node(node_1);
-        flow.add_node(node_2);
-        flow.add_node(node_3);
-        flow.add_node(node_4);
+        let mut flow = Flow::new("flow_1", Version::new(1,0,0), HashMap::new());
+        flow.add_node(node_1, "1".into());
+        flow.add_node(node_2, "2".into());
+        flow.add_node(node_3, "3".into());
+        flow.add_node(node_4, "4".into());
 
         let (controller_sender, controller_receiver) = channel();
         let thread_handle = thread::spawn( move || {
