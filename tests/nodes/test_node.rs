@@ -6,7 +6,7 @@ use serde_json::Value;
 
 use flowrs::{
     connection::{Input, Output, RuntimeConnectable},
-    node::{Context, Node, State, UpdateError, InitError, ShutdownError, ReadyError},
+    node::{Context, Node, UpdateError, InitError, ShutdownError, ReadyError},
 };
 use flowrs_derive::Connectable;
 
@@ -24,9 +24,7 @@ where
     I2: Clone,
 {
     name: String,
-    state: State<AddNodeState<I1, I2>>,
-    _props: Value,
-    _context: State<Context>,
+    state: AddNodeState<I1, I2>,
 
     #[input]
     pub input_1: Input<I1>,
@@ -45,10 +43,7 @@ where
     pub fn new(name: &str, context: State<Context>, props: Value) -> Self {
         Self {
             name: name.into(),
-            state: State::new(AddNodeState::None),
-            _props: props,
-            _context: context.clone(),
-
+            state: AddNodeState::None,
             input_1: Input::new(),
             input_2: Input::new(),
             output_1: Output::new(context.clone()),
@@ -56,7 +51,7 @@ where
     }
 
     fn handle_1(&self, v: I1) -> Result<(), UpdateError> {
-        let mut state = self.state.0.lock().unwrap();
+        
         match state.clone() {
             AddNodeState::I1(_) => {
                 return Err(UpdateError::SequenceError {

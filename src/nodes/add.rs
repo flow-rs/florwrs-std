@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use flowrs::{
     connection::{Input, Output},
-    node::{ChangeObserver, InitError, Node, ReadyError, ShutdownError, State, UpdateError},
+    node::{ChangeObserver, InitError, Node, ReadyError, ShutdownError, UpdateError},
 };
 use flowrs_derive::RuntimeConnectable;
 
@@ -20,7 +20,7 @@ where
     I2: Clone,
 {
     name: String,
-    state: State<AddNodeState<I1, I2>>,
+    state: AddNodeState<I1, I2>,
 
     #[input]
     pub input_1: Input<I1>,
@@ -39,16 +39,15 @@ where
     pub fn new(name: &str, change_observer: Option<&ChangeObserver>) -> Self {
         Self {
             name: name.into(),
-            state: State::new(AddNodeState::None),
+            state: AddNodeState::None,
             input_1: Input::new(),
             input_2: Input::new(),
             output_1: Output::new(change_observer),
         }
     }
 
-    fn handle_1(&self, v: I1) -> Result<(), UpdateError> {
-        let mut state = self.state.0.lock().unwrap();
-        match state.clone() {
+    fn handle_1(&mut self, v: I1) -> Result<(), UpdateError> {
+        match &self.state {
             AddNodeState::I1(_) => {
                 return Err(UpdateError::SequenceError {
                     node: self.name().into(),
@@ -57,21 +56,20 @@ where
             }
             AddNodeState::I2(i) => {
                 let out = v + i.clone();
-                *state = AddNodeState::None;
+                self.state = AddNodeState::None;
                 // TODO replace match statement by ? one error handling is implemented
                 match self.output_1.clone().send(out) {
                     Ok(_) => (),
                     Err(_) => return Err(UpdateError::ConnectError { node: self.name.clone(), message: "You attempted to send to an output where no succesor Node is connected.".into() }),
                 };
             }
-            AddNodeState::None => *state = AddNodeState::I1(v),
+            AddNodeState::None => self.state = AddNodeState::I1(v),
         }
         Ok(())
     }
 
-    fn handle_2(&self, v: I2) -> Result<(), UpdateError> {
-        let mut state = self.state.0.lock().unwrap();
-        match state.clone() {
+    fn handle_2(&mut self, v: I2) -> Result<(), UpdateError> {
+        match &self.state {
             AddNodeState::I2(_) => {
                 return Err(UpdateError::SequenceError {
                     node: self.name().into(),
@@ -80,14 +78,14 @@ where
             }
             AddNodeState::I1(i) => {
                 let out = i.clone() + v;
-                *state = AddNodeState::None;
+                self.state = AddNodeState::None;
                 // TODO replace match statement by ? one error handling is implemented
                 match self.output_1.clone().send(out) {
                     Ok(_) => (),
                     Err(_) => return Err(UpdateError::ConnectError { node: self.name.clone(), message: "You attempted to send to an output where no succesor Node is connected.".into() }),
                 };
             }
-            AddNodeState::None => *state = AddNodeState::I2(v),
+            AddNodeState::None => self.state = AddNodeState::I2(v),
         }
         Ok(())
     }

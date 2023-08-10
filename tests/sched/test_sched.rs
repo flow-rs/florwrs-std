@@ -43,7 +43,7 @@ impl Node for DummyNode {
 #[cfg(test)]
 mod sched {
     
-    use flowrs::{execution::{Executor, StandardExecutor}, scheduler::{RoundRobinScheduler}, node::{Context, State, ChangeObserver, InitError, ReadyError, ShutdownError, UpdateError}, flow::Flow, version::Version, sched::node_updater::MultiThreadedNodeUpdater};
+    use flowrs::{execution::{Executor, StandardExecutor}, scheduler::{RoundRobinScheduler}, node::{Context, ChangeObserver, InitError, ReadyError, ShutdownError, UpdateError}, flow::Flow, version::Version, sched::node_updater::MultiThreadedNodeUpdater};
     use flowrs::connection::{connect, Edge, Input};
     use serde_json::Value;
 
