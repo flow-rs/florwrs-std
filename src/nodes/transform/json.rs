@@ -6,7 +6,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(RuntimeConnectable)]
 pub struct ToJsonStringNode<T> {
+    #[output]
     pub output: Output<String>,
+    
+    #[input]
     pub input: Input<T>,
 }
 
@@ -43,7 +46,10 @@ where T: Serialize + Send {
 
 #[derive(RuntimeConnectable)]
 pub struct FromJsonStringNode<T> {
+    #[output]
     pub output: Output<T>,
+    
+    #[input]
     pub input: Input<String>,
 }
 
