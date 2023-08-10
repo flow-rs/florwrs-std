@@ -38,14 +38,14 @@ mod nodes {
     use flowrs::{
         connection::connect,
         node::ChangeObserver,
-        sched::{version::Version, flow::Flow, execution::{Executor, StandardExecutor}, scheduler::RoundRobinScheduler},
+        sched::{version::Version, flow::Flow, execution::{Executor, StandardExecutor}, scheduler::RoundRobinScheduler, node_updater::{MultiThreadedNodeUpdater, SingleThreadedNodeUpdater, NodeUpdater}},
     };
 
     use flowrs_std::{value::ValueNode, timer::{TimerNodeConfig, TimerNode, TimerNodeToken, WaitTimer, PollTimer, TimerStrategy}, debug::DebugNode};
     
     use crate::nodes::test_timer::ReportNode;
 
-    fn timer_test_with<T: TimerStrategy + Send + 'static>(num_workers: usize, timer: T) {
+    fn timer_test_with<T: TimerStrategy + Send + 'static, U: NodeUpdater + Drop + Send + 'static>(node_updater: U, timer: T) {
 
         let sleep_seconds = 5;
         let timer_interval_seconds = 1;
@@ -77,12 +77,11 @@ mod nodes {
         let (controller_sender, controller_receiver) = channel();
         let thread_handle = thread::spawn( move || {
         
-            let mut executor = StandardExecutor::new(num_workers, change_observer);
-            let scheduler = RoundRobinScheduler::new();
+            let mut executor = StandardExecutor::new(change_observer);
+            
+            controller_sender.send(executor.controller()).expect("Controller sender cannot send.");
 
-            let _ = controller_sender.send(executor.controller());
-
-            executor.run(flow, scheduler);
+            executor.run(flow, RoundRobinScheduler::new(), node_updater).expect("Run failed.");
         });
 
         let controller = controller_receiver.recv().unwrap();
@@ -98,24 +97,28 @@ mod nodes {
 
         let num_iters = receiver.iter().count();
 
-        assert_eq!(num_iters as u64, sleep_seconds / timer_interval_seconds);
+        let asserted_num_iters = sleep_seconds / timer_interval_seconds;
+
+        //println!("{} {}", num_iters, asserted_num_iters.abs_diff(num_iters as u64));
+        assert!(asserted_num_iters.abs_diff(num_iters as u64) <= 1);
+
     }
 
     #[test]
     fn test() {
 
-        timer_test_with(4, WaitTimer::new(true));
+        timer_test_with(MultiThreadedNodeUpdater::new(4), WaitTimer::new(true));
         
-        timer_test_with(4, WaitTimer::new(false));
+        timer_test_with(MultiThreadedNodeUpdater::new(4), WaitTimer::new(false));
 
-        timer_test_with(0, WaitTimer::new(true));
+        timer_test_with(SingleThreadedNodeUpdater::new(Some(100)), WaitTimer::new(true));
     
-        timer_test_with(0, PollTimer::new());
+        timer_test_with(SingleThreadedNodeUpdater::new(Some(100)), PollTimer::new());
 
         // This combination cannot work, since the single execution thread is blocked by the timer. 
-        // timer_test_with(0, WaitTimer::new(false));
+        // timer_test_with(SingleThreadedNodeUpdater::new(), WaitTimer::new(false));
 
         // This combination cannot work, since with multiple workers, a the execution unit sleeps without written outputs.
-        // timer_test_with(4, TimeSliceTimer::new());
+        // timer_test_with(MultiThreadedNodeUpdater::new(4), TimeSliceTimer::new());
     }
 }

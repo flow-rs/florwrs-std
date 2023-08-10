@@ -43,7 +43,7 @@ impl Node for DummyNode {
 #[cfg(test)]
 mod sched {
     
-    use flowrs::{execution::{Executor, StandardExecutor}, scheduler::{RoundRobinScheduler}, node::{Context, State, ChangeObserver, InitError, ReadyError, ShutdownError, UpdateError}, flow::Flow, version::Version};
+    use flowrs::{execution::{Executor, StandardExecutor}, scheduler::{RoundRobinScheduler}, node::{Context, State, ChangeObserver, InitError, ReadyError, ShutdownError, UpdateError}, flow::Flow, version::Version, sched::node_updater::MultiThreadedNodeUpdater};
     use flowrs::connection::{connect, Edge, Input};
     use serde_json::Value;
 
@@ -71,13 +71,12 @@ mod sched {
 
         let thread_handle = thread::spawn( move || {
         
-            let num_threads = 4;
-            let mut executor = StandardExecutor::new(num_threads, change_observer);
-            let scheduler = RoundRobinScheduler::new();
-
+            let num_workers = 4;
+            let mut executor = StandardExecutor::new(change_observer);
+            
             let _ = sender.send(executor.controller());
 
-            let _ = executor.run(flow, scheduler);
+            let _ = executor.run(flow, RoundRobinScheduler::new(), MultiThreadedNodeUpdater::new(num_workers));
         });
 
         let controller = receiver.recv().unwrap();
@@ -110,9 +109,9 @@ mod sched {
        flow.add_node(n1);
        flow.add_node(n2);
 
-       let mut ex = StandardExecutor::new(1, change_observer);
+       let mut ex = StandardExecutor::new(change_observer);
 
-       match ex.run(flow, RoundRobinScheduler::new()) {
+       match ex.run(flow, RoundRobinScheduler::new(), MultiThreadedNodeUpdater::new(1)) {
         Ok(_) => assert!(false),
         Err(_) => assert!(true)
        }
