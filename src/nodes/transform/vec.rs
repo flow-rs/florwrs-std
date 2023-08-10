@@ -24,9 +24,9 @@ impl<T> MergeWindow<T> for CountWindow<T> {
     fn update(&mut self, t: T) -> Option<Vec<T>> {
         self.cur_vec.push(t);
         if self.cur_vec.len() >= self.max_elements {
-            Some(self.cur_vec.drain(..).collect())
+            return Some(self.cur_vec.drain(..).collect())
         } else {
-            None
+            return None
         }
     }
 }
@@ -59,11 +59,9 @@ where T: Send, W: Send + MergeWindow<T>{
 
     fn on_update(&mut self) -> Result<(), UpdateError> {
         
-        if let core::result::Result::Ok(element) = self.input.next() {
+        if let Ok(element) = self.input.next() {
             if let Some(vec) = self.window.update(element) {
-                if let Err(err) = self.output.send(vec){
-                    UpdateError::Other(err.into());
-                }
+                self.output.send(vec).map_err(|e| UpdateError::Other(e.into()))?;   
             }
         }
         Ok(())
@@ -95,9 +93,7 @@ where T: Send{
         
         if let core::result::Result::Ok(vec) = self.input.next() {
             for el in vec {
-                if let Err(err) = self.output.send(el){
-                    UpdateError::Other(err.into());
-                }
+                self.output.send(el).map_err(|e| UpdateError::Other(e.into()))?;   
             }
         }
         Ok(())

@@ -34,9 +34,7 @@ where
 {
     fn on_ready(&self) -> Result<(), ReadyError>{
         //println!("{:?} VALUE", std::thread::current().id());
-        match self.output.clone().send(self.value.clone()) {
-            Err(err) => Err(ReadyError::Other(err.into())),
-            Ok(_) => Ok(())
-        }
+        self.output.clone().send(self.value.clone()).map_err(|e| ReadyError::Other(e.into()))?;   
+        Ok(())
     }
 }

@@ -27,18 +27,10 @@ impl<T> Node for ToJsonStringNode<T>
 where T: Serialize + Send {
 
     fn on_update(&mut self) -> Result<(), UpdateError> {
-        if let Ok(input) = self.input.next() {
-            
-            let res = serde_json::to_string(&input);
-            match res {
-                Ok(json_str) => {
-                    _ = self.output.send(json_str);
-                    return Ok(())
-                },
-                Err(err) => {
-                    return Err(UpdateError::Other(err.into()));
-                }
-            }
+        
+        if let Ok(obj) = self.input.next() {
+            let json_str = serde_json::to_string(&obj).map_err(|e| UpdateError::Other(e.into()))?;
+            self.output.send(json_str).map_err(|e| UpdateError::Other(e.into()))?;   
         }
         Ok(())
     }
@@ -66,18 +58,10 @@ impl<T> FromJsonStringNode<T>
 impl<T> Node for FromJsonStringNode<T> 
     where T: for<'a> Deserialize<'a> + Send {
     fn on_update(&mut self) -> Result<(), UpdateError> {
-        if let Ok(input) = self.input.next() {
-            
-            let res = serde_json::from_str(input.as_str());
-            match res {
-                Ok(obj) => {
-                    _ = self.output.send(obj);
-                    return Ok(())
-                },
-                Err(err) => {
-                    return Err(UpdateError::Other(err.into()));
-                }
-            }
+
+        if let Ok(json_str) = self.input.next() {
+            let obj = serde_json::from_str(json_str.as_str()).map_err(|e| UpdateError::Other(e.into()))?;
+            self.output.send(obj).map_err(|e| UpdateError::Other(e.into()))?;
         }
         Ok(())
     }
