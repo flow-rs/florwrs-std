@@ -16,7 +16,7 @@ mod nodes {
         let _ = node.on_ready();
 
         let expected = 42;
-        let actual: i32 = mock_output.next_elem()?.into();
+        let actual: i32 = mock_output.next()?.into();
         Ok(assert!(expected == actual))
     }
      

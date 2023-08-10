@@ -36,7 +36,7 @@ where
 
     fn on_update(&mut self) -> Result<(), UpdateError> {
         //println!("{:?} DEBUG BEFORE ", std::thread::current().id());
-        if let Ok(input) = self.input.next_elem() {
+        if let Ok(input) = self.input.next() {
             println!("{:?} {:?} DEBUG", std::thread::current().id(),input);
             #[cfg(target_arch = "wasm32")]
             log(format!("{:?} {:?} DEBUG", std::thread::current().id(),input).as_str());

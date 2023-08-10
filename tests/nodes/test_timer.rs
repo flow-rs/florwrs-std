@@ -24,7 +24,7 @@ impl Node for ReportNode {
    
     fn on_update(&mut self) -> Result<(), UpdateError> {
         
-        if let Ok(input) = self.input.next_elem() {            
+        if let Ok(input) = self.input.next() {            
             let _res = self.sender.send(input);
         }
         Ok(())

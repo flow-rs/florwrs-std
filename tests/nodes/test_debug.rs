@@ -19,7 +19,7 @@ mod nodes {
         let _ = snd.on_update();
 
         let expected = 1;
-        let actual = mock_output.next_elem()?;
+        let actual = mock_output.next()?;
         Ok(assert!(expected == actual))
     }
     

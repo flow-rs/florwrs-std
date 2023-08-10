@@ -27,7 +27,7 @@ impl<T> Node for ToJsonStringNode<T>
 where T: Serialize + Send {
 
     fn on_update(&mut self) -> Result<(), UpdateError> {
-        if let Ok(input) = self.input.next_elem() {
+        if let Ok(input) = self.input.next() {
             
             let res = serde_json::to_string(&input);
             match res {
@@ -48,7 +48,7 @@ where T: Serialize + Send {
 pub struct FromJsonStringNode<T> {
     #[output]
     pub output: Output<T>,
-    
+
     #[input]
     pub input: Input<String>,
 }
@@ -66,7 +66,7 @@ impl<T> FromJsonStringNode<T>
 impl<T> Node for FromJsonStringNode<T> 
     where T: for<'a> Deserialize<'a> + Send {
     fn on_update(&mut self) -> Result<(), UpdateError> {
-        if let Ok(input) = self.input.next_elem() {
+        if let Ok(input) = self.input.next() {
             
             let res = serde_json::from_str(input.as_str());
             match res {
@@ -107,7 +107,7 @@ fn test_to_json_and_from_string() {
     let _ = to_string_node.on_update();
     let _ = from_string_node.on_update();
 
-    let out = e.next_elem().expect("");
+    let out = e.next().expect("");
     
     assert_eq!(out,inp);
 

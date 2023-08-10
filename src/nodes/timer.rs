@@ -159,7 +159,7 @@ impl<T> Node for TimerNode<T>
 
     fn on_update(&mut self) -> Result<(), UpdateError> {
 
-        if let Ok(config) = self.config_input.next_elem() {
+        if let Ok(config) = self.config_input.next() {
             
             let mut token_output_clone = self.token_output.clone();
             

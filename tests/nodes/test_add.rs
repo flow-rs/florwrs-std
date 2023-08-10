@@ -22,7 +22,7 @@ mod nodes {
         let _ = add.on_update();
 
         let expected = 3;
-        let actual = mock_output.next_elem()?;
+        let actual = mock_output.next()?;
         Ok(assert!(expected == actual))
     }
 
@@ -51,7 +51,7 @@ mod nodes {
         });
         let mut actual = vec![];
         for _ in 0..100 {
-            let curr = mock_output.next_elem()?;
+            let curr = mock_output.next()?;
             actual.push(curr)
         }
         let exected = vec![100; 100];
@@ -104,7 +104,7 @@ mod nodes {
 
         let mut actual = vec![];
         for _ in 0..100 {
-            let curr = mock_output.next_elem();
+            let curr = mock_output.next();
             actual.push(curr)
         }
         Ok(assert!(!actual.is_empty()))

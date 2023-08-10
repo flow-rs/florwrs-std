@@ -105,12 +105,12 @@ where
 
     // To be replaced by macro
     fn on_update(&mut self) -> Result<(), UpdateError> {
-        if let Ok(i1) = self.input_1.next_elem() {
+        if let Ok(i1) = self.input_1.next() {
             println!("UPDATE1");
             self.handle_1(i1)?;
         }
 
-        if let Ok(i2) = self.input_2.next_elem() {
+        if let Ok(i2) = self.input_2.next() {
             println!("UPDATE2");
             self.handle_2(i2)?;
         }
