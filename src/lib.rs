@@ -8,3 +8,5 @@ pub use self::nodes::debug;
 pub use self::nodes::timer;
 
 pub use self::nodes::transform::json;
+pub use self::nodes::control::switch;
+
