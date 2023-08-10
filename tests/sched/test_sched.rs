@@ -47,7 +47,7 @@ mod sched {
     use flowrs::connection::{connect, Edge, Input};
     use serde_json::Value;
 
-    use std::{thread, sync::mpsc, time::Duration};
+    use std::{thread, sync::mpsc, time::Duration, collections::HashMap};
     use crate::sched::test_sched::DummyNode;
 
     #[test]
@@ -62,12 +62,12 @@ mod sched {
         connect(n1.output_1.clone(), mock_input.clone());
 
 
-        let mut flow = Flow::new("flow_1", Version::new(1,0,0), Vec::new());
+        let mut flow = Flow::new("flow_1", Version::new(1,0,0), HashMap::new());
 
         let _ = n1.input_1.send(1);
       
         
-        flow.add_node(n1);
+        flow.add_node(n1, "first".into());
 
         let thread_handle = thread::spawn( move || {
         
@@ -104,10 +104,10 @@ mod sched {
 
        let n1: DummyNode = DummyNode::new("node_1", true, Some(&change_observer));
        let n2: DummyNode = DummyNode::new("node_2", true, Some(&change_observer));
-       let mut flow = Flow::new("flow_1", Version::new(1,0,0),Vec::new());
+       let mut flow = Flow::new("flow_1", Version::new(1,0,0), HashMap::new());
       
-       flow.add_node(n1);
-       flow.add_node(n2);
+       flow.add_node(n1, "first".into());
+       flow.add_node(n2, "second".into());
 
        let mut ex = StandardExecutor::new(change_observer);
 
