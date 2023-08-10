@@ -1,7 +1,7 @@
 use flowrs::{node::{Node, ChangeObserver, UpdateError, UpdateController}, connection::{Input, Output}};
 use flowrs_derive::RuntimeConnectable;
 
-use std::{time::SystemTime, thread, sync::{Condvar, Mutex, Arc}};
+use std::{time::Instant, thread, sync::{Condvar, Mutex, Arc}};
 use core::time::Duration;
 
 #[derive(Clone)]
@@ -68,7 +68,7 @@ impl TimerStrategy for WaitTimer {
                 ).unwrap();  
 
                 if !result.1.timed_out() {
-                    println!("TIMER SHUTDOWN");
+                    //println!("TIMER SHUTDOWN");
                     break;
                 } 
         
@@ -102,14 +102,14 @@ impl WaitTimer {
 
 pub struct PollTimer {
     every: Duration,
-    last_tick: SystemTime
+    last_tick: Instant
 }
 
 impl PollTimer {
     pub fn new() -> Self {
         Self {
             every: Duration::ZERO,//set later
-            last_tick: SystemTime::now()
+            last_tick: Instant::now()
         }
     }
 }
@@ -117,19 +117,17 @@ impl PollTimer {
 impl TimerStrategy for PollTimer {
     fn start<F>(&mut self, every: Duration, _closure: F) where F: 'static + FnMut() + Send {
         self.every = every;
-        self.last_tick = SystemTime::now();
+        self.last_tick = Instant::now();
     }
 
     fn update(&mut self , output: &mut Output<TimerNodeToken>) {
         
-        let current_time = SystemTime::now();
-        if let Ok(duration) = current_time.duration_since(self.last_tick) {
-            if duration >= self.every {
-                let _res = output.send(TimerNodeToken {});
-                self.last_tick = current_time;
-                println!("TICK");
-            }
+        if self.last_tick.elapsed() >= self.every {
+            let _res = output.send(TimerNodeToken {});
+            self.last_tick = Instant::now();
+            //println!("TICK");
         }
+    
     }
 }
 
@@ -166,9 +164,9 @@ impl<T> Node for TimerNode<T>
             let mut token_output_clone = self.token_output.clone();
             
             self.timer.start(config.duration, move ||{
-                println!("                                                  {:?} TIMER TICK 1", std::thread::current().id());
+                //println!("                                                  {:?} TIMER TICK 1", std::thread::current().id());
                 let res = token_output_clone.send(TimerNodeToken{});
-                println!("                                                  {:?} TIMER TICK 2 {:?}", std::thread::current().id(), res);
+                //println!("                                                  {:?} TIMER TICK 2 {:?}", std::thread::current().id(), res);
                
             });
         }
