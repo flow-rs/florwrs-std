@@ -67,11 +67,11 @@ mod nodes {
         connect(node_2.token_output.clone(), node_3.input.clone());
         connect(node_3.output.clone(), node_4.input.clone());
 
-        let mut flow:Flow<String> = Flow::new_empty("flow_1", Version::new(1,0,0));
-        flow.add_node(node_1, "1".into());
-        flow.add_node(node_2, "2".into());
-        flow.add_node(node_3, "3".into());
-        flow.add_node(node_4, "4".into());
+        let mut flow:Flow = Flow::new_empty("flow_1", Version::new(1,0,0));
+        flow.add_node(node_1);
+        flow.add_node(node_2);
+        flow.add_node(node_3);
+        flow.add_node(node_4);
 
         let (controller_sender, controller_receiver) = channel();
         let thread_handle = thread::spawn( move || {
