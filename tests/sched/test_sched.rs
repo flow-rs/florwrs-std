@@ -34,10 +34,6 @@ impl Node for DummyNode {
         }
         Ok(())
     }
-
-    fn name(&self) -> &str {
-        &self.name
-    }
 }
 
 #[cfg(test)]
@@ -62,7 +58,7 @@ mod sched {
         connect(n1.output_1.clone(), mock_input.clone());
 
 
-        let mut flow = Flow::new("flow_1", Version::new(1,0,0), HashMap::new());
+        let mut flow: Flow<String> = Flow::new_empty("flow_1", Version::new(1,0,0));
 
         let _ = n1.input_1.send(1);
       
@@ -104,7 +100,7 @@ mod sched {
 
        let n1: DummyNode = DummyNode::new("node_1", true, Some(&change_observer));
        let n2: DummyNode = DummyNode::new("node_2", true, Some(&change_observer));
-       let mut flow = Flow::new("flow_1", Version::new(1,0,0), HashMap::new());
+       let mut flow: Flow<String> = Flow::new_empty("flow_1", Version::new(1,0,0));
       
        flow.add_node(n1, "first".into());
        flow.add_node(n2, "second".into());

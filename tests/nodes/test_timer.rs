@@ -67,7 +67,7 @@ mod nodes {
         connect(node_2.token_output.clone(), node_3.input.clone());
         connect(node_3.output.clone(), node_4.input.clone());
 
-        let mut flow = Flow::new("flow_1", Version::new(1,0,0), HashMap::new());
+        let mut flow:Flow<String> = Flow::new_empty("flow_1", Version::new(1,0,0));
         flow.add_node(node_1, "1".into());
         flow.add_node(node_2, "2".into());
         flow.add_node(node_3, "3".into());

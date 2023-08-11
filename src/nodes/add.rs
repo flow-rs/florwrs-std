@@ -19,7 +19,7 @@ where
     I1: Clone,
     I2: Clone,
 {
-    name: String,
+    
     state: AddNodeState<I1, I2>,
 
     #[input]
@@ -36,9 +36,9 @@ where
     I2: Clone + Send,
     O: Clone + Send,
 {
-    pub fn new(name: &str, change_observer: Option<&ChangeObserver>) -> Self {
+    pub fn new(change_observer: Option<&ChangeObserver>) -> Self {
         Self {
-            name: name.into(),
+           
             state: AddNodeState::None,
             input_1: Input::new(),
             input_2: Input::new(),
@@ -50,7 +50,6 @@ where
         match &self.state {
             AddNodeState::I1(_) => {
                 return Err(UpdateError::SequenceError {
-                    node: self.name().into(),
                     message: "Addition should happen pairwise.".into(),
                 })
             }
@@ -60,7 +59,7 @@ where
                 // TODO replace match statement by ? one error handling is implemented
                 match self.output_1.clone().send(out) {
                     Ok(_) => (),
-                    Err(_) => return Err(UpdateError::ConnectError { node: self.name.clone(), message: "You attempted to send to an output where no succesor Node is connected.".into() }),
+                    Err(_) => return Err(UpdateError::ConnectError { message: "You attempted to send to an output where no succesor Node is connected.".into() }),
                 };
             }
             AddNodeState::None => self.state = AddNodeState::I1(v),
@@ -72,7 +71,7 @@ where
         match &self.state {
             AddNodeState::I2(_) => {
                 return Err(UpdateError::SequenceError {
-                    node: self.name().into(),
+                    
                     message: "Addition should happen pairwise.".into(),
                 })
             }
@@ -82,7 +81,7 @@ where
                 // TODO replace match statement by ? one error handling is implemented
                 match self.output_1.clone().send(out) {
                     Ok(_) => (),
-                    Err(_) => return Err(UpdateError::ConnectError { node: self.name.clone(), message: "You attempted to send to an output where no succesor Node is connected.".into() }),
+                    Err(_) => return Err(UpdateError::ConnectError { message: "You attempted to send to an output where no succesor Node is connected.".into() }),
                 };
             }
             AddNodeState::None => self.state = AddNodeState::I2(v),
@@ -97,9 +96,6 @@ where
     I2: Clone + Send,
     O: Clone + Send,
 {
-    fn name(&self) -> &str {
-        &self.name
-    }
 
     // To be replaced by macro
     fn on_update(&mut self) -> Result<(), UpdateError> {

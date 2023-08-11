@@ -13,7 +13,7 @@ mod nodes {
     fn should_add_132() -> Result<(), Error> {
         let change_observer = ChangeObserver::new(); 
         
-        let mut add: AddNode<i32, i32, i32> = AddNode::new("AddNodeI32", Some(&change_observer));
+        let mut add: AddNode<i32, i32, i32> = AddNode::new(Some(&change_observer));
         let mock_output = Edge::new();
         connect(add.output_1.clone(), mock_output.clone());
         let _ = add.input_1.send(1);
@@ -37,7 +37,7 @@ mod nodes {
     fn should_add_multiple_132_sequentially() -> Result<(), Error> {
         let change_observer = ChangeObserver::new(); 
 
-        let mut add: AddNode<i32, i32, i32> = AddNode::new("AddNodeI32", Some(&change_observer));
+        let mut add: AddNode<i32, i32, i32> = AddNode::new(Some(&change_observer));
         let mock_output = Edge::new();
         connect(add.output_1.clone(), mock_output.clone());
         (0..100).for_each(|int| {
@@ -67,8 +67,8 @@ mod nodes {
     fn should_add_multiple_132_parallel() -> Result<(), Error> {
         let change_observer: ChangeObserver = ChangeObserver::new(); 
 
-        let mut add1 = AddNode::new("AddNodeI32", Some(&change_observer));
-        let mut add2 = AddNode::new("AddNodeI32", Some(&change_observer));
+        let mut add1 = AddNode::new( Some(&change_observer));
+        let mut add2 = AddNode::new( Some(&change_observer));
         let mock_output = Edge::new();
         connect(add1.output_1.clone(), add2.input_1.clone());
         connect(add2.output_1.clone(), mock_output.clone());
@@ -114,7 +114,7 @@ mod nodes {
     fn should_return_lhs_at_runtime() {
         let change_observer: ChangeObserver = ChangeObserver::new(); 
 
-        let add: AddNode<i32, i32, i32> = AddNode::new("AddNodeI32", Some(&change_observer));
+        let add: AddNode<i32, i32, i32> = AddNode::new(Some(&change_observer));
         let input1: Rc<dyn Any> = add.input_at(0);
         let input1_downcasted = input1.downcast::<Input<i32>>();
         assert!(input1_downcasted.is_ok())
@@ -124,7 +124,7 @@ mod nodes {
     fn should_return_rhs_at_runtime() {
         let change_observer: ChangeObserver = ChangeObserver::new(); 
 
-        let add: AddNode<i32, i32, i32> = AddNode::new("AddNodeI32", Some(&change_observer));
+        let add: AddNode<i32, i32, i32> = AddNode::new(Some(&change_observer));
         let input1: Rc<dyn Any> = add.input_at(1);
         let input1_downcasted = input1.downcast::<Input<i32>>();
         assert!(input1_downcasted.is_ok())
@@ -134,7 +134,7 @@ mod nodes {
     fn should_return_output_at_runtime() {
         let change_observer: ChangeObserver = ChangeObserver::new(); 
 
-        let add: AddNode<i32, i32, i32> = AddNode::new("AddNodeI32", Some(&change_observer));
+        let add: AddNode<i32, i32, i32> = AddNode::new(Some(&change_observer));
         let input1: Rc<dyn Any> = add.output_at(0);
         let input1_downcasted = input1.downcast::<Output<i32>>();
         assert!(input1_downcasted.is_ok())
@@ -145,7 +145,8 @@ mod nodes {
     fn should_fail_on_index_out_of_bounds() {
         let change_observer: ChangeObserver = ChangeObserver::new(); 
 
-        let add: AddNode<i32, i32, i32> = AddNode::new("AddNodeI32", Some(&change_observer));
+        let add: AddNode<i32, i32, i32> = AddNode::new(Some(&change_observer));
+
         add.input_at(2);
     }
 
@@ -154,7 +155,8 @@ mod nodes {
     fn should_fail_on_output_out_of_bounds() {
         let change_observer: ChangeObserver = ChangeObserver::new(); 
 
-        let add: AddNode<i32, i32, i32> = AddNode::new("AddNodeI32", Some(&change_observer));
+        let add: AddNode<i32, i32, i32> = AddNode::new(Some(&change_observer));
+
         add.output_at(1);
     }
     

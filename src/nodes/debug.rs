@@ -41,7 +41,7 @@ where
             #[cfg(target_arch = "wasm32")]
             log(format!("{:?} {:?} DEBUG", std::thread::current().id(),input).as_str());
 
-            self.output.send(input).map_err(|e| UpdateError::ConnectError { node: "Debug node".into(), message: "Failed to send".into() })?;   
+            self.output.send(input).map_err(|e| UpdateError::ConnectError { message: "Failed to send".into() })?;   
         }
         Ok(())
     }
