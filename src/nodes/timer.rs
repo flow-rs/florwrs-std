@@ -1,7 +1,7 @@
 use flowrs::{node::{Node, ChangeObserver, UpdateError, UpdateController}, connection::{Input, Output}};
 use flowrs_derive::RuntimeConnectable;
 
-use std::{time::Instant, thread, sync::{Condvar, Mutex, Arc}};
+use std::{time::Instant, thread, sync::{Condvar, Mutex, Arc}, marker::PhantomData};
 use core::time::Duration;
 
 #[derive(Clone)]
@@ -9,13 +9,9 @@ pub struct TimerNodeConfig {
    pub duration: Duration
 }
 
-#[derive(Clone, Debug)]
-pub struct TimerNodeToken {
-}
-
-pub trait TimerStrategy {
+pub trait TimerStrategy<U> {
     fn start<F>(&mut self, every: Duration, closure: F) where F: 'static + FnMut() + Send;
-    fn update(&mut self , _output: &mut Output<TimerNodeToken>) {}
+    fn update(&mut self , _output: &mut Output<U>, token: U) {}
     fn update_controller(&self) -> Option<Arc<Mutex<dyn UpdateController>>> {None}
 }
 
@@ -41,12 +37,13 @@ impl UpdateController for WaitTimerUpdateController {
     }
 }
 
-pub struct WaitTimer {
+pub struct WaitTimer<U> {
     own_thread: bool,
     cond_var: Arc<(Mutex<bool>, Condvar)>,
+    _marker: PhantomData<U>
 }
 
-impl TimerStrategy for WaitTimer {
+impl<U> TimerStrategy<U> for WaitTimer<U> {
     
     fn start<F>(&mut self, every: Duration, mut closure: F)
     where F: 'static + FnMut() + Send {
@@ -91,39 +88,42 @@ impl TimerStrategy for WaitTimer {
 
 }
 
-impl WaitTimer {
+impl<U> WaitTimer<U> {
     pub fn new(own_thread: bool) -> Self {
         Self {
             own_thread: own_thread,  
             cond_var: Arc::new((Mutex::new(true), Condvar::new())),
+            _marker: PhantomData,
         }
     }
 }
 
-pub struct PollTimer {
+pub struct PollTimer<U> {
     every: Duration,
-    last_tick: Instant
+    last_tick: Instant,
+    _marker: PhantomData<U>
 }
 
-impl PollTimer {
+impl<U> PollTimer<U>  {
     pub fn new() -> Self {
         Self {
             every: Duration::ZERO,//set later
-            last_tick: Instant::now()
+            last_tick: Instant::now(),
+            _marker: PhantomData
         }
     }
 }
 
-impl TimerStrategy for PollTimer {
+impl<U> TimerStrategy<U> for PollTimer<U> {
     fn start<F>(&mut self, every: Duration, _closure: F) where F: 'static + FnMut() + Send {
         self.every = every;
         self.last_tick = Instant::now();
     }
 
-    fn update(&mut self , output: &mut Output<TimerNodeToken>) {
+    fn update(&mut self , output: &mut Output<U>, token: U) {
         
         if self.last_tick.elapsed() >= self.every {
-            let _res = output.send(TimerNodeToken {});
+            let _res = output.send(token);
             self.last_tick = Instant::now();
             //println!("TICK");
         }
@@ -132,46 +132,61 @@ impl TimerStrategy for PollTimer {
 }
 
 #[derive(RuntimeConnectable)]
-pub struct TimerNode<T>
+pub struct TimerNode<T, U>
 {
     timer: T,
 
     #[input]
     pub config_input: Input<TimerNodeConfig>,
 
+    #[input]
+    pub token_input: Input<U>,
+
     #[output]
-    pub token_output: Output<TimerNodeToken>,
+    pub token_output: Output<U>,
+
+    token_object: Option<U>    
 }
 
-impl<T> TimerNode<T>
-    where T : TimerStrategy {
-    pub fn new(timer: T, change_observer: Option<&ChangeObserver>) -> Self {
+impl<T, U> TimerNode<T, U>
+    where T : TimerStrategy<U>, U: Clone {
+    pub fn new(timer: T, token_object : Option<U>,  change_observer: Option<&ChangeObserver>) -> Self {
         Self {
             config_input: Input::new(), 
+            token_input: Input::new(), 
             token_output: Output::new(change_observer),
-            timer: timer
+            timer: timer,
+            token_object : token_object
         }
     }
 }
 
-impl<T> Node for TimerNode<T>
-    where T : TimerStrategy + Send {
+impl<T, U> Node for TimerNode<T, U>
+    where T : TimerStrategy<U> + Send, U: Clone + Send + Copy + 'static {
 
     fn on_update(&mut self) -> Result<(), UpdateError> {
 
+        // Try to get token object first from token input then from field.      
+        let token = self.token_input.next()
+                    .ok()
+                    .or_else(|| self.token_object.clone())
+                    .ok_or_else(|| UpdateError::Other(anyhow::Error::msg("No token object to send.")))?;
+        
+        // If config changes, recreate timer. 
         if let Ok(config) = self.config_input.next() {
             
             let mut token_output_clone = self.token_output.clone();
+            let token_clone = token.clone();
             
             self.timer.start(config.duration, move ||{
                 //println!("                                                  {:?} TIMER TICK 1", std::thread::current().id());
-                let res = token_output_clone.send(TimerNodeToken{});
+                let _res = token_output_clone.send(token_clone);
                 //println!("                                                  {:?} TIMER TICK 2 {:?}", std::thread::current().id(), res);
                
             });
         }
 
-        self.timer.update(&mut self.token_output);
+        self.timer.update(&mut self.token_output, token);
 
         Ok(())        
     }

@@ -1,18 +1,17 @@
 use flowrs::{connection::{Input}, node::{Node, UpdateError}};
-use flowrs_std::timer::TimerNodeToken;
 use flowrs_derive::RuntimeConnectable;
 use std::sync::mpsc::Sender;
 
 #[derive(RuntimeConnectable)]
 pub struct ReportNode {
-    pub sender: Sender<TimerNodeToken>,
+    pub sender: Sender<bool>,
 
     #[input]
-    pub input: Input<TimerNodeToken>,
+    pub input: Input<bool>,
 }
 
 impl ReportNode {
-    pub fn new(sender: Sender<TimerNodeToken>) -> Self {
+    pub fn new(sender: Sender<bool>) -> Self {
         Self {
             sender: sender,
             input: Input::new()
@@ -41,26 +40,26 @@ mod nodes {
         sched::{version::Version, flow::Flow, execution::{Executor, StandardExecutor}, scheduler::RoundRobinScheduler, node_updater::{MultiThreadedNodeUpdater, SingleThreadedNodeUpdater, NodeUpdater}},
     };
 
-    use flowrs_std::{value::ValueNode, timer::{TimerNodeConfig, TimerNode, TimerNodeToken, WaitTimer, PollTimer, TimerStrategy}, debug::DebugNode};
+    use flowrs_std::{value::ValueNode, timer::{TimerNodeConfig, TimerNode, WaitTimer, PollTimer, TimerStrategy}, debug::DebugNode};
     
     use crate::nodes::test_timer::ReportNode;
 
-    fn timer_test_with<T: TimerStrategy + Send + 'static, U: NodeUpdater + Drop + Send + 'static>(node_updater: U, timer: T) {
+    fn timer_test_with<T: TimerStrategy<bool> + Send + 'static, U: NodeUpdater + Drop + Send + 'static>(node_updater: U, timer: T) {
 
         let sleep_seconds = 5;
         let timer_interval_seconds = 1;
 
         let change_observer: ChangeObserver = ChangeObserver::new(); 
-        let (sender, receiver) = channel::<TimerNodeToken>();
+        let (sender, receiver) = channel::<bool>();
         
         let node_1 = ValueNode::new( 
             TimerNodeConfig {duration: core::time::Duration::from_secs(timer_interval_seconds) },
             Some(&change_observer)            
         );
         
-        let node_2 = TimerNode::new(timer, Some(&change_observer));
+        let node_2 = TimerNode::new(timer, Some(true), Some(&change_observer));
 
-        let node_3 = DebugNode::<TimerNodeToken>::new(Some(&change_observer));
+        let node_3 = DebugNode::<bool>::new(Some(&change_observer));
 
         let node_4 = ReportNode::new(sender);
 
