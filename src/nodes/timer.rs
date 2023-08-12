@@ -37,6 +37,7 @@ impl UpdateController for WaitTimerUpdateController {
     }
 }
 
+#[derive(Clone)]
 pub struct WaitTimer<U> {
     own_thread: bool,
     cond_var: Arc<(Mutex<bool>, Condvar)>,
@@ -98,6 +99,7 @@ impl<U> WaitTimer<U> {
     }
 }
 
+#[derive(Clone)]
 pub struct PollTimer<U> {
     every: Duration,
     last_tick: Instant,

@@ -1,4 +1,4 @@
-use flowrs::{connection::{Input}, node::{Node, UpdateError}};
+use flowrs::{connection::Input, node::{Node, UpdateError}};
 use flowrs_derive::RuntimeConnectable;
 use std::sync::mpsc::Sender;
 
@@ -32,19 +32,18 @@ impl Node for ReportNode {
 
 #[cfg(test)]
 mod nodes {
-    use std::{thread, time::Duration, sync::mpsc::channel, collections::HashMap};
+    use std::{thread, time::Duration, sync::mpsc::channel};
         
     use flowrs::{
         connection::connect,
-        node::ChangeObserver,
-        sched::{version::Version, flow::Flow, execution::{Executor, StandardExecutor}, scheduler::RoundRobinScheduler, node_updater::{MultiThreadedNodeUpdater, SingleThreadedNodeUpdater, NodeUpdater}},
+        node::ChangeObserver, exec::{node_updater::{NodeUpdater, MultiThreadedNodeUpdater, SingleThreadedNodeUpdater}, execution::{StandardExecutor, Executor}}, version::Version, flow_impl::Flow, sched::round_robin::RoundRobinScheduler,
     };
 
     use flowrs_std::{value::ValueNode, timer::{TimerNodeConfig, TimerNode, WaitTimer, PollTimer, TimerStrategy}, debug::DebugNode};
     
     use crate::nodes::test_timer::ReportNode;
 
-    fn timer_test_with<T: TimerStrategy<bool> + Send + 'static, U: NodeUpdater + Drop + Send + 'static>(node_updater: U, timer: T) {
+    fn timer_test_with<T: TimerStrategy<bool> + Send + 'static, U: NodeUpdater + Drop + Send + 'static>(node_updater: U, timer: T) where T: Clone {
 
         let sleep_seconds = 5;
         let timer_interval_seconds = 1;
@@ -57,7 +56,7 @@ mod nodes {
             Some(&change_observer)            
         );
         
-        let node_2 = TimerNode::new(timer, Some(true), Some(&change_observer));
+        let node_2: TimerNode<T, bool> = TimerNode::new(timer, Some(true), Some(&change_observer));
 
         let node_3 = DebugNode::<bool>::new(Some(&change_observer));
 

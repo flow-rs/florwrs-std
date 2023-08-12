@@ -39,11 +39,10 @@ impl Node for DummyNode {
 #[cfg(test)]
 mod sched {
     
-    use flowrs::{execution::{Executor, StandardExecutor}, scheduler::{RoundRobinScheduler}, node::{Context, ChangeObserver, InitError, ReadyError, ShutdownError, UpdateError}, flow::Flow, version::Version, sched::node_updater::MultiThreadedNodeUpdater};
-    use flowrs::connection::{connect, Edge, Input};
-    use serde_json::Value;
 
-    use std::{thread, sync::mpsc, time::Duration, collections::HashMap};
+    use std::{thread, sync::mpsc, time::Duration};
+    use flowrs::{node::ChangeObserver, connection::{Input, connect}, flow_impl::Flow, version::Version, exec::{execution::{StandardExecutor, Executor}, node_updater::MultiThreadedNodeUpdater}, sched::round_robin::RoundRobinScheduler};
+
     use crate::sched::test_sched::DummyNode;
 
     #[test]

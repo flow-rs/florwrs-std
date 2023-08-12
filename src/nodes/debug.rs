@@ -39,9 +39,9 @@ where
         if let Ok(input) = self.input.next() {
             println!("{:?} {:?} DEBUG", std::thread::current().id(),input);
             #[cfg(target_arch = "wasm32")]
-            log(format!("{:?} {:?} DEBUG", std::thread::current().id(),input).as_str());
+            crate::log(format!("{:?} {:?} DEBUG", std::thread::current().id(),input).as_str());
 
-            self.output.send(input).map_err(|e| UpdateError::ConnectError { message: "Failed to send".into() })?;   
+            self.output.send(input).map_err(|e| UpdateError::ConnectError { message: format!("Failed to send {}", e).into() })?;
         }
         Ok(())
     }
