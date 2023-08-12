@@ -1,4 +1,5 @@
 use flowrs::{node::{Node, UpdateError, ChangeObserver}, connection::{Input, Output, connect}};
+use flowrs_derive::RuntimeConnectable;
 
 //use flowrs_derive::RuntimeConnectable;
 
@@ -31,7 +32,7 @@ impl<T> MergeWindow<T> for CountWindow<T> {
     }
 }
 
-//#[derive(RuntimeConnectable)]
+#[derive(RuntimeConnectable)]
 pub struct MergeToVecNode<T, W> {
     
     window: W,

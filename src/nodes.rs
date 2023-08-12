@@ -1,4 +1,4 @@
-pub mod add;
+pub mod arithmetic;
 pub mod value;
 pub mod debug;
 pub mod timer;

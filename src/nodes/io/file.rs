@@ -1,5 +1,5 @@
-use std::io::prelude::*;
-use std::fs::{File, remove_file};
+use std::{io::prelude::*, fs::remove_file};
+use std::fs::File;
 use flowrs::{node::{Node, UpdateError, ChangeObserver}, connection::{Input, Output, connect}};
 
 use flowrs_derive::RuntimeConnectable;
@@ -14,7 +14,7 @@ pub struct FileReaderConfig {
     file: String
 }
 
-//#[derive(RuntimeConnectable)]
+#[derive(RuntimeConnectable)]
 pub struct BinaryFileWriterNode {
      
     //#[input]
@@ -105,12 +105,12 @@ fn test_file_read_and_write() {
 
     let data : Vec<u8> = "123".as_bytes().to_vec();
    
-    writer.config_input.send(FileWriterConfig { file: file.clone() });
-    writer.data_input.send(data.clone());
-    writer.on_update();
+    let _ = writer.config_input.send(FileWriterConfig { file: file.clone() });
+    let _ = writer.data_input.send(data.clone());
+    let _ = writer.on_update();
 
-    reader.config_input.send(FileReaderConfig { file: file.clone() });
-    reader.on_update();
+    let _ = reader.config_input.send(FileReaderConfig { file: file.clone() });
+    let _ = reader.on_update();
 
     
     if let Ok(res_data) = data_input.next() {
@@ -120,7 +120,7 @@ fn test_file_read_and_write() {
         assert!(false);
     }
 
-    remove_file(file);
+    let _ = remove_file(file);
 
     //println!("{:?}", odd_res_nums);
     //println!("{:?}", even_res_nums);

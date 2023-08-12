@@ -2,16 +2,11 @@ use std::ops::Add;
 
 use flowrs::{
     connection::{Input, Output},
-    node::{ChangeObserver, InitError, Node, ReadyError, ShutdownError, UpdateError},
+    node::{ChangeObserver, Node, UpdateError},
 };
 use flowrs_derive::RuntimeConnectable;
 
-#[derive(Clone)]
-enum AddNodeState<I1, I2> {
-    I1(I1),
-    I2(I2),
-    None,
-}
+use super::bin_op::BinOpState;
 
 #[derive(RuntimeConnectable)]
 pub struct AddNode<I1, I2, O>
@@ -19,8 +14,7 @@ where
     I1: Clone,
     I2: Clone,
 {
-    
-    state: AddNodeState<I1, I2>,
+    state: BinOpState<I1, I2>,
 
     #[input]
     pub input_1: Input<I1>,
@@ -38,8 +32,7 @@ where
 {
     pub fn new(change_observer: Option<&ChangeObserver>) -> Self {
         Self {
-           
-            state: AddNodeState::None,
+            state: BinOpState::None,
             input_1: Input::new(),
             input_2: Input::new(),
             output_1: Output::new(change_observer),
@@ -48,43 +41,34 @@ where
 
     fn handle_1(&mut self, v: I1) -> Result<(), UpdateError> {
         match &self.state {
-            AddNodeState::I1(_) => {
+            BinOpState::I1(_) => {
                 return Err(UpdateError::SequenceError {
                     message: "Addition should happen pairwise.".into(),
                 })
             }
-            AddNodeState::I2(i) => {
+            BinOpState::I2(i) => {
                 let out = v + i.clone();
-                self.state = AddNodeState::None;
-                // TODO replace match statement by ? one error handling is implemented
-                match self.output_1.clone().send(out) {
-                    Ok(_) => (),
-                    Err(_) => return Err(UpdateError::ConnectError { message: "You attempted to send to an output where no succesor Node is connected.".into() }),
-                };
+                self.state = BinOpState::None;
+                self.output_1.clone().send(out)?;
             }
-            AddNodeState::None => self.state = AddNodeState::I1(v),
+            BinOpState::None => self.state = BinOpState::I1(v),
         }
         Ok(())
     }
 
     fn handle_2(&mut self, v: I2) -> Result<(), UpdateError> {
         match &self.state {
-            AddNodeState::I2(_) => {
+            BinOpState::I2(_) => {
                 return Err(UpdateError::SequenceError {
-                    
                     message: "Addition should happen pairwise.".into(),
                 })
             }
-            AddNodeState::I1(i) => {
+            BinOpState::I1(i) => {
                 let out = i.clone() + v;
-                self.state = AddNodeState::None;
-                // TODO replace match statement by ? one error handling is implemented
-                match self.output_1.clone().send(out) {
-                    Ok(_) => (),
-                    Err(_) => return Err(UpdateError::ConnectError { message: "You attempted to send to an output where no succesor Node is connected.".into() }),
-                };
+                self.state = BinOpState::None;
+                self.output_1.clone().send(out)?;
             }
-            AddNodeState::None => self.state = AddNodeState::I2(v),
+            BinOpState::None => self.state = BinOpState::I2(v),
         }
         Ok(())
     }
@@ -96,18 +80,31 @@ where
     I2: Clone + Send,
     O: Clone + Send,
 {
-
     // To be replaced by macro
     fn on_update(&mut self) -> Result<(), UpdateError> {
         if let Ok(i1) = self.input_1.next() {
-            println!("UPDATE1");
             self.handle_1(i1)?;
         }
-
         if let Ok(i2) = self.input_2.next() {
-            println!("UPDATE2");
             self.handle_2(i2)?;
         }
         Ok(())
     }
+}
+
+#[test]
+fn should_add_132() -> Result<(), UpdateError> {
+    let change_observer = ChangeObserver::new();
+
+    let mut add: AddNode<i32, i32, i32> = AddNode::new(Some(&change_observer));
+    let mock_output = flowrs::connection::Edge::new();
+    flowrs::connection::connect(add.output_1.clone(), mock_output.clone());
+    let _ = add.input_1.send(1);
+    let _ = add.input_2.send(2);
+    let _ = add.on_update();
+    let _ = add.on_update();
+
+    let expected = 3;
+    let actual = mock_output.next()?;
+    Ok(assert!(expected == actual))
 }

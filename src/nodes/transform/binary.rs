@@ -4,7 +4,7 @@ use flowrs_derive::RuntimeConnectable;
 
 use serde::{Deserialize, Serialize};
 
-//#[derive(RuntimeConnectable)]
+#[derive(RuntimeConnectable)]
 pub struct ToBinaryNode<T> {
     //#[output]
     pub output: Output<Vec<u8>>,
