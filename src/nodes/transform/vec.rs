@@ -1,5 +1,6 @@
 use flowrs::{node::{Node, UpdateError, ChangeObserver}, connection::{Input, Output, connect}};
 use flowrs_derive::RuntimeConnectable;
+use serde::{Deserialize, Serialize};
 
 //use flowrs_derive::RuntimeConnectable;
 
@@ -7,6 +8,7 @@ pub trait MergeWindow<T> {
     fn update(&mut self, t: T) -> Option<Vec<T>>;
 }
 
+#[derive(Deserialize, Serialize)]
 pub struct CountWindow<T> {
     cur_vec: Vec<T>,
     max_elements: usize
@@ -32,15 +34,15 @@ impl<T> MergeWindow<T> for CountWindow<T> {
     }
 }
 
-#[derive(RuntimeConnectable)]
+#[derive(RuntimeConnectable, Deserialize, Serialize)]
 pub struct MergeToVecNode<T, W> {
     
     window: W,
     
-    //#[output]
+    #[output]
     pub output: Output<Vec<T>>,
     
-    //#[input]
+    #[input]
     pub input: Input<T>,
 }
 
@@ -69,12 +71,12 @@ where T: Send, W: Send + MergeWindow<T>{
     }
 }
 
-//#[derive(RuntimeConnectable)]
+#[derive(RuntimeConnectable, Deserialize, Serialize)]
 pub struct SplitVecNode<T> {
-    //#[output]
+    #[output]
     pub output: Output<T>,
     
-    //#[input]
+    #[input]
     pub input: Input<Vec<T>>,
 }
 
@@ -102,7 +104,7 @@ where T: Send{
 }
 
 #[test]
-fn test_to_and_from_vec_with_count_window() {
+fn test_to_and_from_vec_with_count_window() -> Result<(), anyhow::Error> {
     
     let num_elements: usize = 4;
 
@@ -118,13 +120,13 @@ fn test_to_and_from_vec_with_count_window() {
     
     for i in 0..num_elements {
         let _ = merge_to_vec_node_1.input.send(i);
-        merge_to_vec_node_1.on_update();
+        merge_to_vec_node_1.on_update()?;
     }
 
-    split_vec_node.on_update();
+    split_vec_node.on_update()?;
 
-    for i in 0..num_elements {
-        merge_to_vec_node_2.on_update();
+    for _ in 0..num_elements {
+        merge_to_vec_node_2.on_update()?;
     }
     
     let should_be_1: Vec<usize> = (0..=num_elements / 2 - 1).collect();
@@ -135,5 +137,5 @@ fn test_to_and_from_vec_with_count_window() {
         
     assert_eq!(out_1, should_be_1);
     assert_eq!(out_2, should_be_2);
-
+    Ok(())
 }

@@ -1,5 +1,6 @@
 use flowrs::{node::{Node, ChangeObserver, UpdateError, UpdateController}, connection::{Input, Output}};
 use flowrs_derive::RuntimeConnectable;
+use serde::{Deserialize, Serialize};
 
 use std::{time::Instant, thread, sync::{Condvar, Mutex, Arc}, marker::PhantomData};
 use core::time::Duration;
@@ -133,7 +134,7 @@ impl<U> TimerStrategy<U> for PollTimer<U> {
     }
 }
 
-#[derive(RuntimeConnectable)]
+#[derive(RuntimeConnectable, Deserialize, Serialize)]
 pub struct TimerNode<T, U>
 {
     timer: T,

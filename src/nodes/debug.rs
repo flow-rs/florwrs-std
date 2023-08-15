@@ -5,8 +5,9 @@ use flowrs::{
     connection::{Input, Output},
     node::{Node, UpdateError, ChangeObserver},
 };
+use serde::{Deserialize, Serialize};
 
-#[derive(RuntimeConnectable)]
+#[derive(RuntimeConnectable, Deserialize, Serialize)]
 pub struct DebugNode<I>
 where
     I: Clone,

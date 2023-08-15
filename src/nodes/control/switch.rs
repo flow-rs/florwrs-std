@@ -1,9 +1,10 @@
 use flowrs::{node::{Node, UpdateError, ChangeObserver}, connection::{Input, Output, connect}};
 
 use flowrs_derive::RuntimeConnectable;
+use serde::{Deserialize, Serialize};
 
 
-#[derive(RuntimeConnectable)]
+#[derive(RuntimeConnectable, Deserialize, Serialize)]
 pub struct BinarySwitch<T> {
     #[output]
     pub output_1: Output<T>,
@@ -45,7 +46,7 @@ where T: Send {
 }
 
 #[test]
-fn test_switch() {
+fn test_switch() -> Result<(), UpdateError> {
     
     let n: i32 = 1024;
     let numbers: Vec<i32> = (0..n).collect();
@@ -59,8 +60,8 @@ fn test_switch() {
     connect(switch_node.output_2.clone(), e_2.clone());
     
     for i in 0..n {
-        let _ = switch_node.input.send(i);
-        let _ = switch_node.on_update();
+        switch_node.input.send(i)?;
+        switch_node.on_update()?;
     }
 
     let odd_numbers: Vec<_> = numbers.iter().filter(|&x| x % 2 != 0).cloned().collect();
@@ -81,5 +82,38 @@ fn test_switch() {
     
     assert_eq!(odd_res_nums, odd_numbers);
     assert_eq!(even_res_nums, even_numbers);
+    Ok(())
+}
 
+#[test]
+fn should_serialize_deserialize() -> Result<(), UpdateError> {
+    let mut switch: BinarySwitch<i32> = BinarySwitch::new(None);
+    
+    let e_1: flowrs::connection::Edge<i32> = flowrs::connection::Edge::new();
+    let e_2: flowrs::connection::Edge<i32> = flowrs::connection::Edge::new();
+
+    connect(switch.output_1.clone(), e_1.clone());
+    connect(switch.output_2.clone(), e_2.clone());
+
+    switch.input.send(2)?;
+    switch.on_update()?;
+
+    let expected = r#"{"output_1":null,"output_2":null,"input":null,"switch":false}"#;
+    let actual = serde_json::to_string(&switch).unwrap();
+
+    assert_eq!(expected, actual);
+
+    let res = serde_json::from_str::<BinarySwitch<i32>>(expected);
+    let expected;
+    match res {
+        Ok(val) => expected = val,
+        Err(e) => panic!("{}", e),
+    }
+    let actual = switch.switch;
+
+    assert_eq!(
+        serde_json::to_string(&expected.switch).unwrap(),
+        serde_json::to_string(&actual).unwrap()
+    );
+    Ok(())
 }

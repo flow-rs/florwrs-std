@@ -5,9 +5,10 @@ use flowrs::{
     node::{ChangeObserver, Node, UpdateError},
 };
 use flowrs_derive::RuntimeConnectable;
+use serde::{Deserialize, Serialize};
 use std::ops::BitAnd;
 
-#[derive(RuntimeConnectable)]
+#[derive(RuntimeConnectable, Deserialize, Serialize)]
 pub struct AndNode<I1, I2, O>
 where
     I1: Clone,
@@ -86,15 +87,44 @@ where
 fn should_and_bool() -> Result<(), UpdateError> {
     let change_observer = ChangeObserver::new();
 
-    let mut add: AndNode<bool, bool, bool> = AndNode::new(Some(&change_observer));
+    let mut and: AndNode<bool, bool, bool> = AndNode::new(Some(&change_observer));
     let mock_output = flowrs::connection::Edge::new();
-    flowrs::connection::connect(add.output_1.clone(), mock_output.clone());
-    let _ = add.input_1.send(true);
-    let _ = add.input_2.send(false);
-    let _ = add.on_update();
-    let _ = add.on_update();
+    flowrs::connection::connect(and.output_1.clone(), mock_output.clone());
+    and.input_1.send(true)?;
+    and.input_2.send(false)?;
+    and.on_update()?;
+    and.on_update()?;
 
     let expected = false;
     let actual = mock_output.next()?;
     Ok(assert!(expected == actual))
 }
+
+#[test]
+fn should_serialize_deserialize() -> Result<(), UpdateError> {
+    let change_observer = ChangeObserver::new();
+
+    let mut and: AndNode<i32, i32, i32> = AndNode::new(Some(&change_observer));
+    and.input_1.send(2)?;
+    and.on_update()?;
+
+    let expected = r#"{"state":{"I1":2},"input_1":null,"input_2":null,"output_1":null}"#;
+    let actual = serde_json::to_string(&and).unwrap();
+
+    assert_eq!(expected, actual);
+
+    let res = serde_json::from_str::<AndNode<i32, i32, i32>>(expected);
+    let expected;
+    match res {
+        Ok(val) => expected = val,
+        Err(e) => panic!("{}", e),
+    }
+    let actual = and.state;
+
+    assert_eq!(
+        serde_json::to_string(&expected.state).unwrap(),
+        serde_json::to_string(&actual).unwrap()
+    );
+    Ok(())
+}
+

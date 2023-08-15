@@ -4,7 +4,7 @@ mod nodes {
         
     use flowrs::{
         connection::{connect, Edge},
-        node::{ChangeObserver},
+        node::ChangeObserver,
         sched::{version::Version, flow::Flow, executor::{Executor, MultiThreadedExecutor}, scheduler::RoundRobinScheduler},
     };
 

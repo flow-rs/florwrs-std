@@ -4,10 +4,11 @@ use flowrs::{
     node::{ChangeObserver, Node, UpdateError},
 };
 use flowrs_derive::RuntimeConnectable;
+use serde::{Serialize, Deserialize};
 use crate::handle_sequentially;
 use super::binops::BinOpState;
 
-#[derive(RuntimeConnectable)]
+#[derive(RuntimeConnectable, Deserialize, Serialize)]
 pub struct DivNode<I1, I2, O>
 where
     I1: Clone,
@@ -89,15 +90,43 @@ where
 fn should_div_132() -> Result<(), UpdateError> {
     let change_observer = ChangeObserver::new();
 
-    let mut add: DivNode<f32, f32, f32> = DivNode::new(Some(&change_observer));
+    let mut div: DivNode<f32, f32, f32> = DivNode::new(Some(&change_observer));
     let mock_output = flowrs::connection::Edge::new();
-    flowrs::connection::connect(add.output_1.clone(), mock_output.clone());
-    let _ = add.input_1.send(15.0);
-    let _ = add.input_2.send(2.0);
-    let _ = add.on_update();
-    let _ = add.on_update();
+    flowrs::connection::connect(div.output_1.clone(), mock_output.clone());
+    div.input_1.send(15.0)?;
+    div.input_2.send(2.0)?;
+    div.on_update()?;
+    div.on_update()?;
 
     let expected = 7.5;
     let actual = mock_output.next()?;
     Ok(assert!(expected == actual))
+}
+
+#[test]
+fn should_serialize_deserialize() -> Result<(), UpdateError> {
+    let change_observer = ChangeObserver::new();
+
+    let mut div: DivNode<i32, i32, i32> = DivNode::new(Some(&change_observer));
+    div.input_1.send(2)?;
+    div.on_update()?;
+
+    let expected = r#"{"state":{"I1":2},"input_1":null,"input_2":null,"output_1":null}"#;
+    let actual = serde_json::to_string(&div).unwrap();
+
+    assert_eq!(expected, actual);
+
+    let res = serde_json::from_str::<DivNode<i32, i32, i32>>(expected);
+    let expected;
+    match res {
+        Ok(val) => expected = val,
+        Err(e) => panic!("{}", e),
+    }
+    let actual = div.state;
+
+    assert_eq!(
+        serde_json::to_string(&expected.state).unwrap(),
+        serde_json::to_string(&actual).unwrap()
+    );
+    Ok(())
 }

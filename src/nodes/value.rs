@@ -3,9 +3,10 @@ use flowrs::{
     node::{ChangeObserver, ReadyError, Node},
 };
 use flowrs_derive::RuntimeConnectable;
+use serde::{Deserialize, Serialize};
 
 
-#[derive(RuntimeConnectable)]
+#[derive(RuntimeConnectable, Deserialize, Serialize)]
 pub struct ValueNode<I>
 where
     I: Clone,
@@ -33,7 +34,6 @@ where
     I: Clone + Send,
 {
     fn on_ready(&self) -> Result<(), ReadyError>{
-        //println!("{:?} VALUE", std::thread::current().id());
         self.output.clone().send(self.value.clone()).map_err(|e| ReadyError::Other(e.into()))?;   
         Ok(())
     }

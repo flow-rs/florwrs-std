@@ -19,5 +19,4 @@ mod nodes {
         let actual: i32 = mock_output.next()?.into();
         Ok(assert!(expected == actual))
     }
-     
 }

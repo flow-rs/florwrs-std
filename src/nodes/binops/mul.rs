@@ -1,22 +1,19 @@
-use std::ops::Mul;
-
+use super::binops::BinOpState;
+use crate::handle_sequentially;
 use flowrs::{
     connection::{Input, Output},
     node::{ChangeObserver, Node, UpdateError},
 };
 use flowrs_derive::RuntimeConnectable;
+use serde::{Deserialize, Serialize};
+use std::ops::Mul;
 
-use crate::handle_sequentially;
-
-use super::binops::BinOpState;
-
-#[derive(RuntimeConnectable)]
+#[derive(RuntimeConnectable, Deserialize, Serialize)]
 pub struct MulNode<I1, I2, O>
 where
     I1: Clone,
     I2: Clone,
 {
-    
     state: BinOpState<I1, I2>,
 
     #[input]
@@ -35,7 +32,6 @@ where
 {
     pub fn new(change_observer: Option<&ChangeObserver>) -> Self {
         Self {
-           
             state: BinOpState::None,
             input_1: Input::new(),
             input_2: Input::new(),
@@ -91,15 +87,43 @@ where
 fn should_mul_132() -> Result<(), UpdateError> {
     let change_observer = ChangeObserver::new();
 
-    let mut add: MulNode<i32, i32, i32> = MulNode::new(Some(&change_observer));
+    let mut mul: MulNode<i32, i32, i32> = MulNode::new(Some(&change_observer));
     let mock_output = flowrs::connection::Edge::new();
-    flowrs::connection::connect(add.output_1.clone(), mock_output.clone());
-    let _ = add.input_1.send(1);
-    let _ = add.input_2.send(2);
-    let _ = add.on_update();
-    let _ = add.on_update();
+    flowrs::connection::connect(mul.output_1.clone(), mock_output.clone());
+    mul.input_1.send(1)?;
+    mul.input_2.send(2)?;
+    mul.on_update()?;
+    mul.on_update()?;
 
     let expected = 2;
     let actual = mock_output.next()?;
     Ok(assert!(expected == actual))
+}
+
+#[test]
+fn should_serialize_deserialize() -> Result<(), UpdateError> {
+    let change_observer = ChangeObserver::new();
+
+    let mut mul: MulNode<i32, i32, i32> = MulNode::new(Some(&change_observer));
+    mul.input_1.send(2)?;
+    mul.on_update()?;
+
+    let expected = r#"{"state":{"I1":2},"input_1":null,"input_2":null,"output_1":null}"#;
+    let actual = serde_json::to_string(&mul).unwrap();
+
+    assert_eq!(expected, actual);
+
+    let res = serde_json::from_str::<MulNode<i32, i32, i32>>(expected);
+    let expected;
+    match res {
+        Ok(val) => expected = val,
+        Err(e) => panic!("{}", e),
+    }
+    let actual = mul.state;
+
+    assert_eq!(
+        serde_json::to_string(&expected.state).unwrap(),
+        serde_json::to_string(&actual).unwrap()
+    );
+    Ok(())
 }

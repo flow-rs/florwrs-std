@@ -1,10 +1,10 @@
-use flowrs::{node::{Node, UpdateError, ChangeObserver}, connection::{Input, Output, connect}};
+use flowrs::{node::{Node, UpdateError, ChangeObserver}, connection::{Input, Output}};
 
 use flowrs_derive::RuntimeConnectable;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(RuntimeConnectable)]
+#[derive(RuntimeConnectable, Deserialize, Serialize)]
 pub struct ToJsonStringNode<T> {
     #[output]
     pub output: Output<String>,
@@ -68,7 +68,7 @@ impl<T> Node for FromJsonStringNode<T>
 }
 
 #[test]
-fn test_to_json_and_from_string() {
+fn test_to_json_and_from_string() -> Result<(), anyhow::Error> {
     
     #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
     struct TestStruct {
@@ -83,18 +83,18 @@ fn test_to_json_and_from_string() {
 
     let e: flowrs::connection::Edge<TestStruct> = flowrs::connection::Edge::new();
    
-    connect(to_string_node.output.clone(), from_string_node.input.clone());
-    connect(from_string_node.output.clone(), e.clone());
+    flowrs::connection::connect(to_string_node.output.clone(), from_string_node.input.clone());
+    flowrs::connection::connect(from_string_node.output.clone(), e.clone());
     
-    let _ = to_string_node.input.send(inp.clone());
+    to_string_node.input.send(inp.clone())?;
     
-    let _ = to_string_node.on_update();
-    let _ = from_string_node.on_update();
+    to_string_node.on_update()?;
+    from_string_node.on_update()?;
 
     let out = e.next().expect("");
     
     assert_eq!(out,inp);
-
+    Ok(())
 }
 
 
@@ -111,7 +111,7 @@ fn test_from_json_string_error() {
 
     let e: flowrs::connection::Edge<TestStruct> = flowrs::connection::Edge::new();
    
-    connect(from_string_node.output.clone(), e.clone());
+    flowrs::connection::connect(from_string_node.output.clone(), e.clone());
 
     let _ = from_string_node.input.send("{a:\"TEXT\"}}".to_string());
 

@@ -14,9 +14,9 @@ mod nodes {
         let mut snd = DebugNode::new(Some(&change_observer));
         connect(fst.output.clone(), snd.input.clone());
         connect(snd.output.clone(), mock_output.clone());
-        let _ = fst.input.send(1);
-        let _ = fst.on_update();
-        let _ = snd.on_update();
+        fst.input.send(1)?;
+        fst.on_update()?;
+        snd.on_update()?;
 
         let expected = 1;
         let actual = mock_output.next()?;

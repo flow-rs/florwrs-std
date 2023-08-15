@@ -20,6 +20,7 @@ macro_rules! handle_sequentially {
                     }
                 }
             }
+            // The functionality is repeated to handle two inputs per epoche
             match self.state {
                 super::binops::BinOpState::I1(_) => {
                     if let Ok(i2) = self.$rhs_input.next() {
