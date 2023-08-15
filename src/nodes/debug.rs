@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use flowrs_derive::RuntimeConnectable;
+use flowrs::RuntimeConnectable;
 use flowrs::{
     connection::{Input, Output},
     node::{Node, UpdateError, ChangeObserver},

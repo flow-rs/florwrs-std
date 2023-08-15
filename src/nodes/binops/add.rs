@@ -2,9 +2,8 @@ use super::binops::BinOpState;
 use crate::handle_sequentially;
 use flowrs::{
     connection::{Input, Output},
-    node::{ChangeObserver, Node, UpdateError},
+    node::{ChangeObserver, Node, UpdateError}, RuntimeConnectable,
 };
-use flowrs_derive::RuntimeConnectable;
 use serde::{Deserialize, Serialize};
 use std::ops::Add;
 

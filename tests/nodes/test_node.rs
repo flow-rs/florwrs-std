@@ -8,7 +8,7 @@ use flowrs::{
     connection::{Input, Output, RuntimeConnectable},
     node::{Context, Node, UpdateError, InitError, ShutdownError, ReadyError},
 };
-use flowrs_derive::Connectable;
+use flowrs::Connectable;
 
 #[derive(Clone)]
 enum AddNodeState<I1, I2> {

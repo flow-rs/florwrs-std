@@ -4,7 +4,7 @@ use flowrs::{
     connection::{Input, Output},
     node::{ChangeObserver, Node, UpdateError},
 };
-use flowrs_derive::RuntimeConnectable;
+use flowrs::RuntimeConnectable;
 use serde::{Deserialize, Serialize};
 use std::ops::BitOr;
 

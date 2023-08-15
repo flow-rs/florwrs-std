@@ -2,7 +2,7 @@ use flowrs::{
     connection::Output,
     node::{ChangeObserver, ReadyError, Node},
 };
-use flowrs_derive::RuntimeConnectable;
+use flowrs::RuntimeConnectable;
 use serde::{Deserialize, Serialize};
 
 

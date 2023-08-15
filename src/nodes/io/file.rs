@@ -2,7 +2,7 @@ use std::{io::prelude::*, fs::remove_file};
 use std::fs::File;
 use flowrs::{node::{Node, UpdateError, ChangeObserver}, connection::{Input, Output, connect}};
 
-use flowrs_derive::RuntimeConnectable;
+use flowrs::RuntimeConnectable;
 
 #[derive(Clone)]
 pub struct FileWriterConfig {

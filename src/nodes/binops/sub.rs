@@ -3,7 +3,7 @@ use flowrs::{
     connection::{Input, Output},
     node::{ChangeObserver, Node, UpdateError},
 };
-use flowrs_derive::RuntimeConnectable;
+use flowrs::RuntimeConnectable;
 use serde::{Deserialize, Serialize};
 use crate::handle_sequentially;
 use super::binops::BinOpState;

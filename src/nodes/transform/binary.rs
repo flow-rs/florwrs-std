@@ -1,5 +1,5 @@
 use flowrs::{node::{Node, UpdateError, ChangeObserver}, connection::{Input, Output}};
-use flowrs_derive::RuntimeConnectable;
+use flowrs::RuntimeConnectable;
 use serde::{Deserialize, Serialize};
 
 #[derive(RuntimeConnectable, Deserialize, Serialize)]

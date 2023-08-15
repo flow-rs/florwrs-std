@@ -1,8 +1,8 @@
 use flowrs::{node::{Node, UpdateError, ChangeObserver}, connection::{Input, Output, connect}};
-use flowrs_derive::RuntimeConnectable;
+use flowrs::RuntimeConnectable;
 use serde::{Deserialize, Serialize};
 
-//use flowrs_derive::RuntimeConnectable;
+//use flowrs::RuntimeConnectable;
 
 pub trait MergeWindow<T> {
     fn update(&mut self, t: T) -> Option<Vec<T>>;

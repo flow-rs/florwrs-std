@@ -1,5 +1,5 @@
 use flowrs::{connection::Input, node::{Node, UpdateError}};
-use flowrs_derive::RuntimeConnectable;
+use flowrs::RuntimeConnectable;
 use std::sync::mpsc::Sender;
 
 #[derive(RuntimeConnectable)]

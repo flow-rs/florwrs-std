@@ -1,6 +1,6 @@
 use flowrs::node::{ ChangeObserver, Node, InitError};
 use flowrs::connection::{Input, Output};
-use flowrs_derive::RuntimeConnectable;
+use flowrs::RuntimeConnectable;
 
 use std::fs::File;
 

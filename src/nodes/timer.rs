@@ -1,5 +1,5 @@
 use flowrs::{node::{Node, ChangeObserver, UpdateError, UpdateController}, connection::{Input, Output}};
-use flowrs_derive::RuntimeConnectable;
+use flowrs::RuntimeConnectable;
 use serde::{Deserialize, Serialize};
 
 use std::{time::Instant, thread, sync::{Condvar, Mutex, Arc}, marker::PhantomData};
