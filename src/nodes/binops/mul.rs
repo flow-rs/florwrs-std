@@ -6,11 +6,9 @@ use flowrs::{
 };
 use flowrs_derive::RuntimeConnectable;
 
-enum MulNodeState<I1, I2> {
-    I1(I1),
-    I2(I2),
-    None,
-}
+use crate::handle_sequentially;
+
+use super::binops::BinOpState;
 
 #[derive(RuntimeConnectable)]
 pub struct MulNode<I1, I2, O>
@@ -19,7 +17,7 @@ where
     I2: Clone,
 {
     
-    state: MulNodeState<I1, I2>,
+    state: BinOpState<I1, I2>,
 
     #[input]
     pub input_1: Input<I1>,
@@ -38,7 +36,7 @@ where
     pub fn new(change_observer: Option<&ChangeObserver>) -> Self {
         Self {
            
-            state: MulNodeState::None,
+            state: BinOpState::None,
             input_1: Input::new(),
             input_2: Input::new(),
             output_1: Output::new(change_observer),
@@ -47,34 +45,34 @@ where
 
     fn handle_1(&mut self, v: I1) -> Result<(), UpdateError> {
         match &self.state {
-            MulNodeState::I1(_) => {
+            BinOpState::I1(_) => {
                 return Err(UpdateError::SequenceError {
                     message: "Multiplication should happen pairwise.".into(),
                 })
             }
-            MulNodeState::I2(i) => {
+            BinOpState::I2(i) => {
                 let out = v * i.clone();
-                self.state = MulNodeState::None;
+                self.state = BinOpState::None;
                 self.output_1.clone().send(out)?;
             }
-            MulNodeState::None => self.state = MulNodeState::I1(v),
+            BinOpState::None => self.state = BinOpState::I1(v),
         }
         Ok(())
     }
 
     fn handle_2(&mut self, v: I2) -> Result<(), UpdateError> {
         match &self.state {
-            MulNodeState::I2(_) => {
+            BinOpState::I2(_) => {
                 return Err(UpdateError::SequenceError {
                     message: "Multiplication should happen pairwise.".into(),
                 })
             }
-            MulNodeState::I1(i) => {
+            BinOpState::I1(i) => {
                 let out = i.clone() * v;
-                self.state = MulNodeState::None;
+                self.state = BinOpState::None;
                 self.output_1.clone().send(out)?;
             }
-            MulNodeState::None => self.state = MulNodeState::I2(v),
+            BinOpState::None => self.state = BinOpState::I2(v),
         }
         Ok(())
     }
@@ -86,17 +84,7 @@ where
     I2: Clone + Send,
     O: Clone + Send,
 {
-
-    // To be replaced by macro
-    fn on_update(&mut self) -> Result<(), UpdateError> {
-        if let Ok(i1) = self.input_1.next() {
-            self.handle_1(i1)?;
-        }
-        if let Ok(i2) = self.input_2.next() {
-            self.handle_2(i2)?;
-        }
-        Ok(())
-    }
+    handle_sequentially!(input_1, input_2, handle_1, handle_2);
 }
 
 #[test]

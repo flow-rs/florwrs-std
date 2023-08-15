@@ -4,8 +4,10 @@ mod nodes {
     use flowrs::connection::{connect, Edge, Input, Output, RuntimeConnectable};
     use flowrs::node::{ChangeObserver, Node};
     use flowrs_std::add::AddNode;
+    use flowrs_std::and::AndNode;
     use flowrs_std::div::DivNode;
     use flowrs_std::mul::MulNode;
+    use flowrs_std::or::OrNode;
     use flowrs_std::sub::SubNode;
     use std::any::Any;
     use std::rc::Rc;
@@ -48,6 +50,15 @@ mod nodes {
         ))
     }
 
+    /// Scenario:
+    ///
+    /// [0, 1, ..., 100]
+    ///         \
+    ///          >-<Add1>----[100, 100, ..., 100]
+    ///         /                     \
+    /// [100, 99, ..., 0]              >-<Add2>--[101, 101, ..., 101]
+    ///                               /
+    ///                        [1, 1, ..., 1]
     #[test]
     fn should_add_multiple_132_parallel() -> Result<(), Error> {
         let change_observer: ChangeObserver = ChangeObserver::new();
@@ -68,7 +79,7 @@ mod nodes {
         });
 
         let handle1 = thread::spawn(move || {
-            (0..100).for_each(|_| {
+            (0..1000).for_each(|_| {
                 match add1.on_update() {
                     Ok(_) => (),
                     Err(e) => println!("{:?}", e),
@@ -76,7 +87,7 @@ mod nodes {
             });
         });
         let handle2 = thread::spawn(move || {
-            (0..100).for_each(|_| {
+            (0..1000).for_each(|_| {
                 match add2.on_update() {
                     Ok(_) => (),
                     Err(e) => println!("{:?}", e),
@@ -89,16 +100,26 @@ mod nodes {
 
         let mut actual = vec![];
         for _ in 0..100 {
-            let curr = mock_output.next();
-            actual.push(curr)
+            let res = mock_output.next();
+            if let Ok(curr) = res {
+                actual.push(curr)
+            }
         }
-        Ok(assert!(!actual.is_empty()))
+        let exected = vec![101; 100];
+        Ok(assert!(
+            exected == actual,
+            "expected was: {:?}, len {} while actual was {:?}, len {}",
+            exected,
+            exected.len(),
+            actual,
+            actual.len()
+        ))
     }
 
     #[test]
     #[should_panic(expected = "Index 1 out of bounds for AddNode with output len 1.")]
     fn should_fail_on_output_out_of_bounds() {
-        let change_observer: ChangeObserver = ChangeObserver::new(); 
+        let change_observer: ChangeObserver = ChangeObserver::new();
 
         let add: AddNode<i32, i32, i32> = AddNode::new(Some(&change_observer));
 
@@ -106,92 +127,102 @@ mod nodes {
     }
 
     macro_rules! should_accept_input {
-    ($($name:ident: ($kind:ident, $value:expr),)*) => {
+    ($($name:ident: ($kind:ident<$ty:ident>, $value:expr),)*) => {
     $(
         #[test]
         fn $name() {
             let index = $value;
             let change_observer: ChangeObserver = ChangeObserver::new();
-            let node: $kind<f32, f32, f32> = $kind::new(Some(&change_observer));
+            let node: $kind<$ty, $ty, $ty> = $kind::new(Some(&change_observer));
             let input: Rc<dyn Any> = node.input_at(index);
-            let input_downcasted = input.downcast::<Input<f32>>();
+            let input_downcasted = input.downcast::<Input<$ty>>();
             assert!(input_downcasted.is_ok())
         }
     )*
     }}
 
     macro_rules! should_reject_input {
-    ($($name:ident: ($kind:ident, $value:expr),)*) => {
+    ($($name:ident: ($kind:ident<$ty:ident>, $value:expr),)*) => {
     $(
         #[test]
         #[should_panic]
         fn $name() {
             let index = $value;
             let change_observer: ChangeObserver = ChangeObserver::new();
-            let node: $kind<f32, f32, f32> = $kind::new(Some(&change_observer));
+            let node: $kind<$ty, $ty, $ty> = $kind::new(Some(&change_observer));
             node.input_at(index);
         }
     )*
     }}
 
     macro_rules! should_accept_output {
-    ($($name:ident: ($kind:ident, $value:expr),)*) => {
+    ($($name:ident: ($kind:ident <$ty:ident>, $value:expr),)*) => {
     $(
         #[test]
         fn $name() {
             let index = $value;
             let change_observer: ChangeObserver = ChangeObserver::new();
-            let node: $kind<f32, f32, f32> = $kind::new(Some(&change_observer));
+            let node: $kind<$ty, $ty, $ty> = $kind::new(Some(&change_observer));
             let output: Rc<dyn Any> = node.output_at(index);
-            let output_downcasted = output.downcast::<Output<f32>>();
+            let output_downcasted = output.downcast::<Output<$ty>>();
             assert!(output_downcasted.is_ok())
         }
     )*
     }}
 
     macro_rules! should_reject_output {
-    ($($name:ident: ($kind:ident, $value:expr),)*) => {
+    ($($name:ident: ($kind:ident <$ty:ident>, $value:expr),)*) => {
     $(
         #[test]
         #[should_panic]
         fn $name() {
             let index = $value;
             let change_observer: ChangeObserver = ChangeObserver::new();
-            let node: $kind<f32, f32, f32> = $kind::new(Some(&change_observer));
+            let node: $kind<$ty, $ty, $ty> = $kind::new(Some(&change_observer));
             node.output_at(index);
         }
     )*
     }}
 
     should_accept_input! {
-        add_input_0: (AddNode, 0),
-        add_input_1: (AddNode, 1),
-        mul_input_0: (MulNode, 0),
-        mul_input_1: (MulNode, 1),
-        sub_input_0: (SubNode, 0),
-        sub_input_1: (SubNode, 1),
-        div_input_0: (DivNode, 0),
-        div_input_1: (DivNode, 1),
+        add_input_0: (AddNode<f32>, 0),
+        add_input_1: (AddNode<f32>, 1),
+        mul_input_0: (MulNode<f32>, 0),
+        mul_input_1: (MulNode<f32>, 1),
+        sub_input_0: (SubNode<f32>, 0),
+        sub_input_1: (SubNode<f32>, 1),
+        div_input_0: (DivNode<f32>, 0),
+        div_input_1: (DivNode<f32>, 1),
+        and_input_0: (AndNode<u8>, 0),
+        and_input_1: (AndNode<u8>, 1),
+        or_input_0: (OrNode<u8>, 0),
+        or_input_1: (OrNode<u8>, 1),
     }
 
     should_reject_input! {
-        add_input_2: (AddNode, 2),
-        mul_input_2: (MulNode, 2),
-        div_input_2: (DivNode, 2),
-        sub_input_2: (SubNode, 2),
+        add_input_2: (AddNode<f32>, 2),
+        mul_input_2: (MulNode<f32>, 2),
+        div_input_2: (DivNode<f32>, 2),
+        sub_input_2: (SubNode<f32>, 2),
+        and_input_2: (AndNode<u8>, 2),
+        or_input_2: (OrNode<u8>, 2),
     }
 
     should_accept_output! {
-        add_output_0: (AddNode, 0),
-        mul_output_0: (MulNode, 0),
-        sub_output_0: (SubNode, 0),
-        div_output_0: (DivNode, 0),
+        add_output_0: (AddNode<f32>, 0),
+        mul_output_0: (MulNode<f32>, 0),
+        sub_output_0: (SubNode<f32>, 0),
+        div_output_0: (DivNode<f32>, 0),
+        and_output_0: (AndNode<u8>, 0),
+        or_output_0: (OrNode<u8>, 0),
     }
 
     should_reject_output! {
-        add_output_1: (AddNode, 1),
-        mul_output_1: (MulNode, 1),
-        div_output_1: (DivNode, 1),
-        sub_output_1: (SubNode, 1),
+        add_output_1: (AddNode<f32>, 1),
+        mul_output_1: (MulNode<f32>, 1),
+        div_output_1: (DivNode<f32>, 1),
+        sub_output_1: (SubNode<f32>, 1),
+        and_output_1: (AndNode<u8>, 1),
+        or_output_1: (OrNode<u8>, 1),
     }
 }

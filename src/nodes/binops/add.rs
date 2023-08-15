@@ -5,8 +5,11 @@ use flowrs::{
     node::{ChangeObserver, Node, UpdateError},
 };
 use flowrs_derive::RuntimeConnectable;
+use serde::Serialize;
 
-use super::bin_op::BinOpState;
+use crate::handle_sequentially;
+
+use super::binops::BinOpState;
 
 #[derive(RuntimeConnectable)]
 pub struct AddNode<I1, I2, O>
@@ -80,16 +83,7 @@ where
     I2: Clone + Send,
     O: Clone + Send,
 {
-    // To be replaced by macro
-    fn on_update(&mut self) -> Result<(), UpdateError> {
-        if let Ok(i1) = self.input_1.next() {
-            self.handle_1(i1)?;
-        }
-        if let Ok(i2) = self.input_2.next() {
-            self.handle_2(i2)?;
-        }
-        Ok(())
-    }
+    handle_sequentially!(input_1, input_2, handle_1, handle_2);
 }
 
 #[test]
