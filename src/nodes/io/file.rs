@@ -1,10 +1,11 @@
-use std::{io::prelude::*, fs::remove_file};
+use std::io::prelude::*;
 use std::fs::File;
-use flowrs::{node::{Node, UpdateError, ChangeObserver}, connection::{Input, Output, connect}};
+use flowrs::{node::{Node, UpdateError, ChangeObserver}, connection::{Input, Output}};
 
 use flowrs::RuntimeConnectable;
+use serde::{Serialize, Deserialize};
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct FileWriterConfig {
     file: String
 }
@@ -14,13 +15,13 @@ pub struct FileReaderConfig {
     file: String
 }
 
-#[derive(RuntimeConnectable)]
+#[derive(RuntimeConnectable, Deserialize, Serialize)]
 pub struct BinaryFileWriterNode {
      
-    //#[input]
+    #[input]
     pub data_input: Input<Vec<u8>>,
 
-    //#[input]
+    #[input]
     pub config_input: Input<FileWriterConfig>,
 
     current_config: Option<FileWriterConfig>
@@ -55,13 +56,13 @@ impl Node for BinaryFileWriterNode {
     }
 }
 
-//#[derive(RuntimeConnectable)]
+#[derive(RuntimeConnectable, Deserialize, Serialize)]
 pub struct BinaryFileReaderNode {
      
-    //#[output]
+    #[output]
     pub data_output: Output<Vec<u8>>,
 
-    //#[input]
+    #[input]
     pub config_input: Input<FileReaderConfig>,
 }
 
@@ -101,7 +102,7 @@ fn test_file_read_and_write() {
 
     let data_input: flowrs::connection::Edge<Vec<u8>> = flowrs::connection::Edge::new();
    
-    connect(reader.data_output.clone(), data_input.clone());
+    flowrs::connection::connect(reader.data_output.clone(), data_input.clone());
 
     let data : Vec<u8> = "123".as_bytes().to_vec();
    
@@ -120,7 +121,7 @@ fn test_file_read_and_write() {
         assert!(false);
     }
 
-    let _ = remove_file(file);
+    let _ = std::fs::remove_file(file);
 
     //println!("{:?}", odd_res_nums);
     //println!("{:?}", even_res_nums);

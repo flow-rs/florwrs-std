@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::{time::Instant, thread, sync::{Condvar, Mutex, Arc}, marker::PhantomData};
 use core::time::Duration;
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct TimerNodeConfig {
    pub duration: Duration
 }
@@ -38,9 +38,10 @@ impl UpdateController for WaitTimerUpdateController {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct WaitTimer<U> {
     own_thread: bool,
+    #[serde(skip)]
     cond_var: Arc<(Mutex<bool>, Condvar)>,
     _marker: PhantomData<U>
 }
@@ -100,9 +101,15 @@ impl<U> WaitTimer<U> {
     }
 }
 
-#[derive(Clone)]
+fn now() -> Instant {
+    Instant::now()
+}
+
+#[derive(Clone, Deserialize, Serialize)]
 pub struct PollTimer<U> {
     every: Duration,
+    #[serde(skip)]
+    #[serde(default = "now")] 
     last_tick: Instant,
     _marker: PhantomData<U>
 }
@@ -135,7 +142,7 @@ impl<U> TimerStrategy<U> for PollTimer<U> {
 }
 
 #[derive(RuntimeConnectable, Deserialize, Serialize)]
-pub struct TimerNode<T, U>
+pub struct TimerNode<T, U> where T: TimerStrategy<U>
 {
     timer: T,
 
@@ -151,8 +158,8 @@ pub struct TimerNode<T, U>
     token_object: Option<U>    
 }
 
-impl<T, U> TimerNode<T, U>
-    where T : TimerStrategy<U>, U: Clone {
+impl<'a, T, U> TimerNode<T, U>
+    where T : Deserialize<'a> + Serialize + TimerStrategy<U>, U: Clone {
     pub fn new(timer: T, token_object : Option<U>,  change_observer: Option<&ChangeObserver>) -> Self {
         Self {
             config_input: Input::new(), 
@@ -164,8 +171,8 @@ impl<T, U> TimerNode<T, U>
     }
 }
 
-impl<T, U> Node for TimerNode<T, U>
-    where T : TimerStrategy<U> + Send, U: Clone + Send + Copy + 'static {
+impl<'a, T, U> Node for TimerNode<T, U>
+    where T : Deserialize<'a> + Serialize + TimerStrategy<U> + Send, U: Clone + Send + Copy + 'static {
 
     fn on_update(&mut self) -> Result<(), UpdateError> {
 

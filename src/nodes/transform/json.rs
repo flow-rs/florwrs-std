@@ -36,7 +36,7 @@ where T: Serialize + Send {
     }
 }
 
-#[derive(RuntimeConnectable)]
+#[derive(RuntimeConnectable, Deserialize, Serialize)]
 pub struct FromJsonStringNode<T> {
     #[output]
     pub output: Output<T>,
