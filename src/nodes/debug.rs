@@ -41,8 +41,9 @@ where
             println!("{:?} {:?} DEBUG", std::thread::current().id(),input);
             #[cfg(target_arch = "wasm32")]
             crate::log(format!("{:?} {:?} DEBUG", std::thread::current().id(),input).as_str());
-
-            self.output.send(input).map_err(|e| UpdateError::ConnectError { message: format!("Failed to send {}", e).into() })?;
+            
+            // Send fails if the output is not connected. We ignore that in this case.
+            let _ = self.output.send(input).map_err(|e| UpdateError::ConnectError { message: format!("Failed to send. Reason: {}", e).into() });
         }
         Ok(())
     }

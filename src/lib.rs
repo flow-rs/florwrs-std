@@ -1,4 +1,4 @@
-mod nodes;
+pub mod nodes;
 
 use wasm_bindgen::prelude::wasm_bindgen;
 

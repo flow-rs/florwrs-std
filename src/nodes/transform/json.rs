@@ -78,6 +78,8 @@ fn test_to_json_and_from_string() -> Result<(), anyhow::Error> {
 
     let inp = TestStruct{a:42, b: -42};
 
+    println!("Path: {}", module_path!());
+
     let mut to_string_node: ToJsonStringNode<TestStruct> = ToJsonStringNode::new(None);
     let mut from_string_node: FromJsonStringNode<TestStruct> = FromJsonStringNode::new(None);
 

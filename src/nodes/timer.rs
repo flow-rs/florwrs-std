@@ -2,8 +2,8 @@ use flowrs::{node::{Node, ChangeObserver, UpdateError, UpdateController}, connec
 use flowrs::RuntimeConnectable;
 use serde::{Deserialize, Serialize};
 
-use std::{time::Instant, thread, sync::{Condvar, Mutex, Arc}, marker::PhantomData};
-use core::time::Duration;
+use std::{thread, sync::{Condvar, Mutex, Arc}, marker::PhantomData};
+use web_time::{Instant, Duration};
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct TimerNodeConfig {
@@ -160,13 +160,23 @@ pub struct TimerNode<T, U> where T: TimerStrategy<U>
 
 impl<'a, T, U> TimerNode<T, U>
     where T : Deserialize<'a> + Serialize + TimerStrategy<U>, U: Clone {
-    pub fn new(timer: T, token_object : Option<U>,  change_observer: Option<&ChangeObserver>) -> Self {
+    pub fn new_with_token(timer: T, token_object: U,  change_observer: Option<&ChangeObserver>) -> Self {
         Self {
             config_input: Input::new(), 
             token_input: Input::new(), 
             token_output: Output::new(change_observer),
             timer: timer,
-            token_object : token_object
+            token_object : Some(token_object)
+        }
+    }
+
+    pub fn new(timer: T, change_observer: Option<&ChangeObserver>) -> Self {
+        Self {
+            config_input: Input::new(), 
+            token_input: Input::new(), 
+            token_output: Output::new(change_observer),
+            timer: timer,
+            token_object : Option::None
         }
     }
 }
@@ -175,30 +185,35 @@ impl<'a, T, U> Node for TimerNode<T, U>
     where T : Deserialize<'a> + Serialize + TimerStrategy<U> + Send, U: Clone + Send + Copy + 'static {
 
     fn on_update(&mut self) -> Result<(), UpdateError> {
-
-        // Try to get token object first from token input then from field.      
-        let token = self.token_input.next()
-                    .ok()
-                    .or_else(|| self.token_object.clone())
-                    .ok_or_else(|| UpdateError::Other(anyhow::Error::msg("No token object to send.")))?;
-        
-        // If config changes, recreate timer. 
-        if let Ok(config) = self.config_input.next() {
-            
-            let mut token_output_clone = self.token_output.clone();
-            let token_clone = token.clone();
-            
-            self.timer.start(config.duration, move ||{
-                //println!("                                                  {:?} TIMER TICK 1", std::thread::current().id());
-                let _res = token_output_clone.send(token_clone);
-                //println!("                                                  {:?} TIMER TICK 2 {:?}", std::thread::current().id(), res);
-               
-            });
+ 
+        // Try to get token object token input.      
+        if let Ok(token) = self.token_input.next() {
+            self.token_object = Some(token);
         }
 
-        self.timer.update(&mut self.token_output, token);
+        // We have a token object.
+        if let Some(token) = self.token_object {
+            
+            // If config changes, recreate timer. 
+            if let Ok(config) = self.config_input.next() {
+                
+                let mut token_output_clone = self.token_output.clone();
+                let token_clone = token.clone();
+                
+                self.timer.start(config.duration, move ||{
+                    //println!("                                                  {:?} TIMER TICK 1", std::thread::current().id());
+                    let _res = token_output_clone.send(token_clone);
+                    //println!("                                                  {:?} TIMER TICK 2 {:?}", std::thread::current().id(), res);
+                
+                });
+            }
 
-        Ok(())        
+            self.timer.update(&mut self.token_output, token);
+            Ok(())
+
+        } else {
+            Err(UpdateError::Other(anyhow::Error::msg("No token object to send.")))
+        }        
     }
 
     fn update_controller(&self) -> Option<Arc<Mutex<dyn UpdateController>>> {

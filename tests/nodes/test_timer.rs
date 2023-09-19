@@ -78,7 +78,7 @@ mod nodes {
             Some(&change_observer),
         );
 
-        let node_2: TimerNode<T, bool> = TimerNode::new(timer, Some(true), Some(&change_observer));
+        let node_2: TimerNode<T, bool> = TimerNode::new_with_token(timer, true, Some(&change_observer));
 
         let node_3 = DebugNode::<bool>::new(Some(&change_observer));
 
@@ -149,7 +149,7 @@ mod nodes {
     fn should_deserialize_serialize() {
         let change_observer: ChangeObserver = ChangeObserver::new();
         let timer = WaitTimer::new(true);
-        let node = TimerNode::new(timer, Some(true), Some(&change_observer));
+        let node = TimerNode::new_with_token(timer, Some(true), Some(&change_observer));
 
         let expected = r#"{"timer":{"own_thread":true,"_marker":null},"config_input":null,"token_input":null,"token_output":null,"token_object":true}"#;
         let actual = serde_json::to_string(&node).unwrap();
@@ -170,7 +170,7 @@ mod nodes {
         );
 
         let timer = PollTimer::new();
-        let node = TimerNode::new(timer, Some(true), Some(&change_observer));
+        let node = TimerNode::new_with_token(timer, Some(true), Some(&change_observer));
 
         let expected = r#"{"timer":{"every":{"secs":0,"nanos":0},"_marker":null},"config_input":null,"token_input":null,"token_output":null,"token_object":true}"#;
         let actual = serde_json::to_string(&node).unwrap();
