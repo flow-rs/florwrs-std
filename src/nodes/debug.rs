@@ -36,14 +36,13 @@ where
 {
 
     fn on_update(&mut self) -> Result<(), UpdateError> {
-        //println!("{:?} DEBUG BEFORE ", std::thread::current().id());
         if let Ok(input) = self.input.next() {
             println!("{:?} {:?} DEBUG", std::thread::current().id(),input);
             #[cfg(target_arch = "wasm32")]
             crate::log(format!("{:?} {:?} DEBUG", std::thread::current().id(),input).as_str());
-            
+
             // Send fails if the output is not connected. We ignore that in this case.
-            let _ = self.output.send(input).map_err(|e| UpdateError::ConnectError { message: format!("Failed to send. Reason: {}", e).into() });
+            let _ = self.output.send(input);
         }
         Ok(())
     }

@@ -1,6 +1,6 @@
 use flowrs::{
     connection::Output,
-    node::{ChangeObserver, ReadyError, Node},
+    node::{ChangeObserver, ReadyError, Node, UpdateError},
 };
 use flowrs::RuntimeConnectable;
 use serde::{Deserialize, Serialize};
@@ -38,3 +38,37 @@ where
         Ok(())
     }
 }
+
+#[derive(RuntimeConnectable, Deserialize, Serialize)]
+pub struct ValueUpdateNode<I>
+where
+    I: Clone,
+{
+    value: I,
+    
+    #[output]
+    pub output: Output<I>,
+}
+
+impl<I> ValueUpdateNode<I>
+where
+    I: Clone,
+{
+    pub fn new(value: I, change_observer: Option<&ChangeObserver>) -> Self {
+        Self {
+            value,
+            output: Output::new(change_observer),
+        }
+    }
+}
+
+impl<I> Node for ValueUpdateNode<I>
+where
+    I: Clone + Send,
+{
+    fn on_update(&mut self) -> Result<(), UpdateError>{
+        self.output.clone().send(self.value.clone())?;   
+        Ok(())
+    }
+}
+

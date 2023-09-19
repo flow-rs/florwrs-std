@@ -17,6 +17,7 @@ pub use self::nodes::control::switch;
 pub use self::nodes::io::file;
 pub use self::nodes::transform::binary;
 pub use self::nodes::transform::json;
+pub use self::nodes::transform::vec;
 
 // Required for debug node
 #[wasm_bindgen]
