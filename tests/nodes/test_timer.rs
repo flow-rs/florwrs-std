@@ -44,7 +44,6 @@ mod nodes {
         flow_impl::Flow,
         node::ChangeObserver,
         sched::round_robin::RoundRobinScheduler,
-        version::Version,
     };
 
     use flowrs_std::{
@@ -88,7 +87,7 @@ mod nodes {
         connect(node_2.token_output.clone(), node_3.input.clone());
         connect(node_3.output.clone(), node_4.input.clone());
 
-        let mut flow: Flow = Flow::new_empty("flow_1", Version::new(1, 0, 0));
+        let mut flow: Flow = Flow::new_empty();
         flow.add_node(node_1);
         flow.add_node(node_2);
         flow.add_node(node_3);

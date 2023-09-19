@@ -41,7 +41,7 @@ mod sched {
     
 
     use std::{thread, sync::mpsc, time::Duration};
-    use flowrs::{node::ChangeObserver, connection::{Input, connect}, flow_impl::Flow, version::Version, exec::{execution::{StandardExecutor, Executor}, node_updater::MultiThreadedNodeUpdater}, sched::round_robin::RoundRobinScheduler};
+    use flowrs::{node::ChangeObserver, connection::{Input, connect}, flow_impl::Flow,  exec::{execution::{StandardExecutor, Executor}, node_updater::MultiThreadedNodeUpdater}, sched::round_robin::RoundRobinScheduler};
 
     use crate::sched::test_sched::DummyNode;
 
@@ -57,7 +57,7 @@ mod sched {
         connect(n1.output_1.clone(), mock_input.clone());
 
 
-        let mut flow: Flow = Flow::new_empty("flow_1", Version::new(1,0,0));
+        let mut flow: Flow = Flow::new_empty();
 
         let _ = n1.input_1.send(1);
       
@@ -99,7 +99,7 @@ mod sched {
 
        let n1: DummyNode = DummyNode::new("node_1", true, Some(&change_observer));
        let n2: DummyNode = DummyNode::new("node_2", true, Some(&change_observer));
-       let mut flow: Flow = Flow::new_empty("flow_1", Version::new(1,0,0));
+       let mut flow: Flow = Flow::new_empty();
       
        flow.add_node(n1);
        flow.add_node(n2);
