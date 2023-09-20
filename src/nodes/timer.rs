@@ -39,6 +39,48 @@ impl UpdateController for WaitTimerUpdateController {
 }
 
 #[derive(Clone, Deserialize, Serialize)]
+pub struct SelectedTimer<U> {
+    #[cfg(not(target_arch = "wasm32"))]
+    timer: WaitTimer<U>,
+    #[cfg(target_arch = "wasm32")]
+    timer: PollTimer<U> 
+}
+
+impl<U> TimerStrategy<U> for SelectedTimer<U> {
+    
+    fn start<F>(&mut self, every: Duration, mut closure: F)
+    where F: 'static + FnMut() + Send {
+        self.timer.start(every, closure);
+    }
+
+    fn update_controller(&self) -> Option<Arc<Mutex<dyn UpdateController>>> {
+        self.timer.update_controller()
+    }
+
+    fn update(&mut self , output: &mut Output<U>, token: U) {
+        
+      self.timer.update(output, token);
+    
+    }
+}
+
+impl<U> SelectedTimer<U> {
+
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn new() -> Self {
+        Self {
+            timer: WaitTimer::new(true)
+        }
+    }
+    #[cfg(target_arch = "wasm32")]
+    pub fn new() -> Self {
+        Self {
+            timer: PollTimer::new()
+        }
+    }    
+}
+
+#[derive(Clone, Deserialize, Serialize)]
 pub struct WaitTimer<U> {
     own_thread: bool,
     #[serde(skip)]
