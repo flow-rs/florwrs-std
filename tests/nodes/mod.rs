@@ -1,4 +1,5 @@
 pub mod test_value;
+pub mod test_http;
 pub mod test_debug;
 pub mod test_timer;
 pub mod transform;

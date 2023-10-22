@@ -6,3 +6,4 @@ pub mod num;
 pub mod timer;
 pub mod transform;
 pub mod value;
+pub mod http;
