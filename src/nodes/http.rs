@@ -1,13 +1,31 @@
-use flowrs::RuntimeConnectable;
 use flowrs::node::SendError;
+use flowrs::RuntimeConnectable;
 use flowrs::{
     connection::{Input, Output},
-    node::{Node, UpdateError, ChangeObserver},
+    node::{ChangeObserver, Node, UpdateError},
 };
-use serde::{Deserialize, Serialize};
 use reqwest::blocking::Client;
+use serde::{Deserialize, Serialize};
 
 #[derive(RuntimeConnectable, Deserialize, Serialize)]
+
+/*
+Data Input:
+{
+    "url": "",
+    "method": "",
+    "headers": {
+        "": "", 
+        "": ""
+    },
+    "body": ""
+}
+
+Config Input
+{
+    "timeout": 10000
+}
+*/
 pub struct HttpNode<I>
 where
     I: Clone,
@@ -19,7 +37,7 @@ where
     pub config_input: Input<I>,
 
     #[output]
-    pub output: Output<I>,
+    pub output: Output<String>,
 }
 
 impl<I> HttpNode<I>
@@ -39,34 +57,29 @@ impl<I> Node for HttpNode<I>
 where
     I: Clone + Send,
 {
-
     fn on_update(&mut self) -> Result<(), UpdateError> {
-        if let Ok(input) = self.data_input.next() {
-            //let client = reqwest::Client::new();
-            let client = Client::new();
+        let Ok(input) = self.data_input.next() else {
+            return Err(UpdateError::Other(anyhow::Error::msg(
+                "No valid data input.",
+            )))};
 
-            let response = client
-                .get("https://catfact.ninja/fact")
-                //.header(AUTHORIZATION, "Bearer [AUTH_TOKEN]")
-                //.header(CONTENT_TYPE, "application/json")
-                //.header(ACCEPT, "application/json")
-                .send();
+        let client = Client::new();
 
-            match response {
-                Ok(response) => {
-                    let body = response.text().unwrap();
-                    //let _ = self.output.clone().send(body.clone());
-                },
-                Err(e) => {
-                    //UpdateError::new(e.to_string());
-                    //e.to_string()
-                    //let _ = self.output.send(SendError::new(e.to_string().clone()));
-                }
-            };
+        let response = client
+            .get("https://catfact.ninja/fact")
+            //.header(AUTHORIZATION, "Bearer [AUTH_TOKEN]")
+            //.header(CONTENT_TYPE, "application/json")
+            //.header(ACCEPT, "application/json")
+            .send();
 
-            // Send fails if the output is not connected. We ignore that in //this case.
-            //let _ = self.output.send(update_object);
+        match response {
+            Ok(response) => {
+                let body = response.text().unwrap();
+                let _ = self.output.clone().send(body.clone());
+                Ok(())
+            }
+            Err(e) => Err(UpdateError::Other(anyhow::Error::msg(e.to_string()))),
         }
-        Ok(())
+
     }
 }
