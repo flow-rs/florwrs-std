@@ -33,7 +33,7 @@ impl Node for ReportNode {
 
 #[cfg(test)]
 mod nodes {
-    use std::{sync::mpsc::channel, thread, time::Duration, task::Poll};
+    use std::{sync::mpsc::channel, task::Poll, thread, time::Duration};
 
     use flowrs::{
         connection::connect,
@@ -77,7 +77,8 @@ mod nodes {
             Some(&change_observer),
         );
 
-        let node_2: TimerNode<T, bool> = TimerNode::new_with_token(timer, true, Some(&change_observer));
+        let node_2: TimerNode<T, bool> =
+            TimerNode::new_with_token(timer, true, Some(&change_observer));
 
         let node_3 = DebugNode::<bool>::new(Some(&change_observer));
 

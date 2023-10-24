@@ -1,9 +1,10 @@
 pub mod binops;
 pub mod control;
 pub mod debug;
+pub mod http;
 pub mod io;
+pub mod javascript;
 pub mod num;
 pub mod timer;
 pub mod transform;
 pub mod value;
-pub mod http;

@@ -1,10 +1,10 @@
 use super::binops::BinOpState;
 use crate::handle_sequentially;
+use flowrs::RuntimeConnectable;
 use flowrs::{
     connection::{Input, Output},
     node::{ChangeObserver, Node, UpdateError},
 };
-use flowrs::RuntimeConnectable;
 use serde::{Deserialize, Serialize};
 use std::ops::BitAnd;
 
@@ -127,4 +127,3 @@ fn should_serialize_deserialize() -> Result<(), UpdateError> {
     );
     Ok(())
 }
-

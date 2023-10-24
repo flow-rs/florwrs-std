@@ -1,13 +1,15 @@
 #[cfg(test)]
 mod nodes {
-    
-    
+
+    use flowrs::{
+        connection::{connect, Edge},
+        node::{ChangeObserver, Node},
+    };
     use flowrs_std::debug::DebugNode;
-    use flowrs::{connection::{Edge, connect}, node::{ChangeObserver, Node}};
 
     #[test]
     fn should_add_132() -> Result<(), anyhow::Error> {
-        let change_observer: ChangeObserver = ChangeObserver::new(); 
+        let change_observer: ChangeObserver = ChangeObserver::new();
 
         let mock_output = Edge::new();
         let mut fst = DebugNode::new(Some(&change_observer));
@@ -22,5 +24,4 @@ mod nodes {
         let actual = mock_output.next()?;
         Ok(assert!(expected == actual))
     }
-    
 }

@@ -15,7 +15,7 @@ Data Input:
     "url": "",
     "method": "",
     "headers": {
-        "": "", 
+        "": "",
         "": ""
     },
     "body": ""
@@ -61,7 +61,8 @@ where
         let Ok(input) = self.data_input.next() else {
             return Err(UpdateError::Other(anyhow::Error::msg(
                 "No valid data input.",
-            )))};
+            )));
+        };
 
         let client = Client::new();
 
@@ -80,6 +81,5 @@ where
             }
             Err(e) => Err(UpdateError::Other(anyhow::Error::msg(e.to_string()))),
         }
-
     }
 }
