@@ -1,52 +1,71 @@
-use boa_engine::{Context, JsError, Source};
+use boa_engine::{property::Attribute, Context, JsError, JsValue, Source};
 use flowrs::{
-    connection::Output,
+    connection::{Input, Output},
     node::{ChangeObserver, Node, UpdateError},
     RuntimeConnectable,
 };
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 #[derive(RuntimeConnectable, Deserialize, Serialize)]
-pub struct JsNode {
+pub struct JsNode<I, O> {
+    #[input]
+    pub input: Input<I>,
+    #[input]
+    pub code_input: Input<String>,
     #[output]
-    pub output: Output<serde_json::Value>,
+    pub output: Output<O>,
+
+    code: String,
 }
 
-impl JsNode {
+impl<I, O> JsNode<I, O> {
     pub fn new(change_observer: Option<&ChangeObserver>) -> Self {
         Self {
+            input: Input::new(),
+            code_input: Input::new(),
             output: Output::new(change_observer),
+            code: String::new(),
         }
     }
 }
 
-impl Node for JsNode {
+impl<I, O> Node for JsNode<I, O>
+where
+    I: Send + Serialize,
+    O: Send + DeserializeOwned,
+{
     fn on_update(&mut self) -> anyhow::Result<(), UpdateError> {
-        // TODO: make this dynamic
-        let code = r#"
-        function main() {
-            return {
-                method: "POST",
-                url: "https://www.example.com",
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            };
+        if let Ok(code) = self.code_input.next() {
+            self.code = code;
+        } // XXX: can *actual* errors occur here that we must not ignore?
+        if self.code.is_empty() {
+            return Err(UpdateError::RecvError {
+                message: "no JavaScript code given".to_string(),
+            });
         }
-        "#;
-        let mut context = Context::default();
-        let err_handler = |e: JsError| UpdateError::Other(anyhow::Error::msg(e.to_string()));
-        context
-            .eval(Source::from_bytes(code))
-            .map_err(err_handler)?;
+        let input_obj = self.input.next()?;
 
+        let mut context = Context::default();
+        let js_err_map = |e: JsError| UpdateError::Other(anyhow::Error::msg(e.to_string()));
+        context
+            .eval(Source::from_bytes(&self.code))
+            .map_err(js_err_map)?;
+
+        let serialized = serde_json::to_value(input_obj).map_err(anyhow::Error::from)?;
+        let input = JsValue::from_json(&serialized, &mut context).map_err(js_err_map)?;
+        context
+            .register_global_property("__input", input, Attribute::all())
+            .map_err(js_err_map)?;
+
+        // scripts must define a main() function with optional input arg as entrypoint
         let result = context
-            .eval(Source::from_bytes("main()"))
-            .map_err(err_handler)?;
+            .eval(Source::from_bytes("main(__input)"))
+            .map_err(js_err_map)?;
 
         // scripts must return a value that can be converted into JSON
-        let json = result.to_json(&mut context).map_err(err_handler)?;
-        self.output.send(json)?;
+        let json = result.to_json(&mut context).map_err(js_err_map)?;
+        let deserialized = serde_json::from_value(json).map_err(anyhow::Error::from)?;
+        self.output.send(deserialized)?;
         Ok(())
     }
 }
