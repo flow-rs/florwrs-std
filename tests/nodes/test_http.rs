@@ -7,7 +7,7 @@ mod nodes {
     };
     use flowrs_std::http::HttpNode;
     use serde_json::json;
-
+    use std::time::Duration;
 
     #[test]
     fn get_request() {
@@ -30,7 +30,7 @@ mod nodes {
         "url": url.to_string() + path,
         "method": method
         });
-     
+
         let mut http_node: HttpNode = HttpNode::new(Some(&change_observer));
         let mock_output = Edge::new();
         connect(http_node.output.clone(), mock_output.clone());
@@ -39,7 +39,56 @@ mod nodes {
 
         mock.assert(); // checks if the mock server has been called
         let returned_body = mock_output.next().unwrap();
-        assert!(returned_body == expected_response_body, "expected_body: {}, returned_body: {}", expected_response_body, returned_body);
+        assert!(
+            returned_body == expected_response_body,
+            "expected_body: {}, returned_body: {}",
+            expected_response_body,
+            returned_body
+        );
+    }
+
+    #[test]
+    fn get_request_with_timeout_change() {
+        let mut server = mockito::Server::new();
+
+        let url = server.url();
+        let method = "GET";
+        let path = "/hello";
+        let expected_response_body = "Hello World!";
+
+        // Create a mock
+        let mock = server
+            .mock(&method, path.clone())
+            .with_status(200)
+            .with_body(expected_response_body)
+            .create();
+
+        let change_observer: ChangeObserver = ChangeObserver::new();
+        let data_input_json = json!({
+        "url": url.to_string() + path,
+        "method": method
+        });
+        let new_timeout = 5000;
+        let config_input_json = json!({ "timeout": new_timeout });
+
+        let mut http_node: HttpNode = HttpNode::new(Some(&change_observer));
+        let mock_output = Edge::new();
+        connect(http_node.output.clone(), mock_output.clone());
+        let _ = http_node.config_input.send(config_input_json.clone());
+        let _ = http_node.data_input.send(data_input_json.clone());
+        let initial_timeout = http_node.timeout;
+        http_node.on_update().unwrap();
+
+        mock.assert(); // checks if the mock server has been called
+        let returned_body = mock_output.next().unwrap();
+        assert!(initial_timeout != http_node.timeout);
+        assert!(http_node.timeout == Duration::from_millis(new_timeout));
+        assert!(
+            returned_body == expected_response_body,
+            "expected_body: {}, returned_body: {}",
+            expected_response_body,
+            returned_body
+        );
     }
 
     #[test]
@@ -62,7 +111,6 @@ mod nodes {
             .with_body(&expected_response_body)
             .create();
 
-
         let change_observer: ChangeObserver = ChangeObserver::new();
         let data_input_json = json!({
         "url": url.to_string() + path,
@@ -73,7 +121,7 @@ mod nodes {
         },
         "body": expected_response_body
         });
-     
+
         let mut http_node: HttpNode = HttpNode::new(Some(&change_observer));
         let mock_output = Edge::new();
         connect(http_node.output.clone(), mock_output.clone());
@@ -82,8 +130,12 @@ mod nodes {
 
         mock.assert(); // checks if the mock server has been called
         let returned_body = mock_output.next().unwrap();
-        assert!(returned_body == expected_response_body, "expected_body: {}, returned_body: {}", expected_response_body, returned_body);
-
+        assert!(
+            returned_body == expected_response_body,
+            "expected_body: {}, returned_body: {}",
+            expected_response_body,
+            returned_body
+        );
     }
 
     #[test]
@@ -113,7 +165,7 @@ mod nodes {
         "method": method,
         "body": request_body
         });
-     
+
         let mut http_node: HttpNode = HttpNode::new(Some(&change_observer));
         let mock_output = Edge::new();
         connect(http_node.output.clone(), mock_output.clone());
@@ -122,7 +174,12 @@ mod nodes {
 
         mock.assert(); // checks if the mock server has been called
         let returned_body = mock_output.next().unwrap();
-        assert!(returned_body == expected_response_body, "expected_body: {}, returned_body: {}", expected_response_body, returned_body);
+        assert!(
+            returned_body == expected_response_body,
+            "expected_body: {}, returned_body: {}",
+            expected_response_body,
+            returned_body
+        );
     }
 
     #[test]
@@ -145,7 +202,6 @@ mod nodes {
             .with_body(&expected_response_body)
             .create();
 
-
         let change_observer: ChangeObserver = ChangeObserver::new();
         let data_input_json = json!({
         "url": url.to_string() + path,
@@ -156,7 +212,7 @@ mod nodes {
         },
         "body": expected_response_body
         });
-     
+
         let mut http_node: HttpNode = HttpNode::new(Some(&change_observer));
         let mock_output = Edge::new();
         connect(http_node.output.clone(), mock_output.clone());
@@ -165,7 +221,11 @@ mod nodes {
 
         mock.assert(); // checks if the mock server has been called
         let returned_body = mock_output.next().unwrap();
-        assert!(returned_body == expected_response_body, "expected_body: {}, returned_body: {}", expected_response_body, returned_body);
-
+        assert!(
+            returned_body == expected_response_body,
+            "expected_body: {}, returned_body: {}",
+            expected_response_body,
+            returned_body
+        );
     }
 }
