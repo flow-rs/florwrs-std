@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::str::FromStr;
 use std::time::Duration;
 
@@ -10,38 +11,52 @@ use reqwest::blocking::Client;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+
+#[derive(Clone, Copy)]
+pub enum HTTPMethod {
+    GET,
+    POST,
+    PUT,
+    DELETE,
+}
+
+#[derive(Clone)]
+pub struct RequestInput {
+    pub url: String,
+    pub method: HTTPMethod,
+    pub headers: HashMap<String, String>,
+    pub body: Option<String>,
+}
+
+pub struct ConfigInput {
+    pub timeout: Option<Duration>,
+    pub accept_invalid_certs: Option<bool>,
+}
+
+#[derive(Clone)]
+pub struct ResponseOutput {
+    pub body: String,
+    pub headers: HashMap<String, String>,
+    pub response_code: u16,
+    pub content_length: u64,
+}
 
 #[derive(RuntimeConnectable, Deserialize, Serialize)]
-
-/*
-Data Input:
-{
-    "url": "",
-    "method": "",
-    "headers": {
-        "": "",
-        "": ""
-    },
-    "body": ""
-}
-
-Config Input
-{
-    "timeout": 10000  // in ms
-}
-*/
 pub struct HttpNode {
     #[input]
-    pub data_input: Input<serde_json::Value>,
+    pub data_input: Input<RequestInput>, // struct
 
     #[input]
-    pub config_input: Input<serde_json::Value>,
+    pub config_input: Input<ConfigInput>, // struct
 
     #[output]
-    pub output: Output<String>,
+    pub body_output: Output<String>,
+
+    #[output]
+    pub extended_output: Output<ResponseOutput>,
 
     pub timeout: Duration,
+    pub accept_invalid_certs: bool,
 }
 
 impl HttpNode {
@@ -49,98 +64,97 @@ impl HttpNode {
         Self {
             data_input: Input::new(),
             config_input: Input::new(),
-            output: Output::new(change_observer),
+            body_output: Output::new(change_observer),
+            extended_output: Output::new(change_observer),
             timeout: Duration::new(30, 0),
+            accept_invalid_certs: false,
         }
     }
 }
 
-fn extract_key_value_pairs(json_value: &Value) -> HeaderMap {
-    let mut header_map = reqwest::header::HeaderMap::new();
+fn extract_key_value_pairs(raw_header_hashmap: &HashMap<String, String>) -> HeaderMap {
+    let mut header_map = HeaderMap::new();
 
-    if let Value::Object(raw_header_map) = json_value {
-        for (key, value) in raw_header_map {
-            let header_name = HeaderName::from_str(&key.to_lowercase());
-            if header_name.is_err() {
-                continue;
-            }
-
-            let value_str = &value.as_str().unwrap_or("").to_lowercase();
-            let header_value =
-                HeaderValue::from_str(&value_str).unwrap_or(HeaderValue::from_static(""));
-            header_map.insert(header_name.unwrap(), header_value);
+    for (key, value) in raw_header_hashmap {
+        let header_name = HeaderName::from_str(&key.to_lowercase());
+        if header_name.is_err() {
+            continue;
         }
+
+        let value_str = &value.to_lowercase();
+        let header_value =
+            HeaderValue::from_str(&value_str).unwrap_or_else(|_| HeaderValue::from_static(""));
+        header_map.insert(header_name.unwrap(), header_value);
     }
 
-    // headers
     header_map
 }
 
-impl HttpNode {
-    fn set_timeout(&mut self, config_value: &Value) {
-        if let Value::Object(config_map) = config_value {
-            if let Some(Value::Number(timeout)) = config_map.get("timeout") {
-                let given_timeout = timeout.as_u64();
-                if given_timeout.is_some() {
-                    self.timeout = Duration::from_millis(given_timeout.unwrap());
-                }
-            }
-        }
+fn convert_header_map(header_map: &HeaderMap) -> HashMap<String, String> {
+    let mut hash_map = HashMap::new();
+
+    for (key, value) in header_map {
+        let key_str = key.as_str().to_string();
+        hash_map.insert(key_str, value.to_str().unwrap().to_string());
     }
+
+    hash_map
 }
 
 impl Node for HttpNode {
     fn on_update(&mut self) -> Result<(), UpdateError> {
-        let config = self.config_input.next();
-        if config.is_ok() {
-            let config_value = config.unwrap();
-            self.set_timeout(&config_value);
+        if let Ok(config) = self.config_input.next() {
+            if let Some(timeout) = config.timeout {
+                self.timeout = timeout;
+            }
+            if let Some(accept_invalid_certs) = config.accept_invalid_certs {
+                self.accept_invalid_certs = accept_invalid_certs;
+            }
         }
-        let input = self.data_input.next()?;
+
+        let Ok(input) = self.data_input.next() else {
+            return Ok(());
+        };
 
         let mut client_builder = Client::builder();
 
-        let method_str = match &input["method"] {
-            Value::String(m) => Ok(m.clone()),
-            _ => Err(UpdateError::Other(anyhow::Error::msg(
-                "No REST method given. Key \"method\" with a valid REST verb as value is required. Currently supported: GET.",
-            ))),
-        }?;
+        let headers = extract_key_value_pairs(&input.headers);
 
-        let url = match &input["url"] {
-            Value::String(u) => Ok(u.clone()),
-            _ => Err(UpdateError::Other(anyhow::Error::msg("No URL given."))),
-        }?;
-
-        let headers = extract_key_value_pairs(&input.get("headers").unwrap_or(&Value::Null));
-
-        let body_value = input.get("body").unwrap_or(&Value::Null);
-        let body = serde_json::to_string(&body_value).unwrap_or(String::from(""));
+        let body = input.body.unwrap_or_default();
+        //let body = serde_json::to_string(&body_value).unwrap_or_default();
 
         let reqwest_err_map =
             |e: reqwest::Error| UpdateError::Other(anyhow::Error::msg(e.to_string()));
 
         client_builder = client_builder
             .default_headers(headers)
-            .timeout(self.timeout);
+            .timeout(self.timeout)
+            .danger_accept_invalid_certs(self.accept_invalid_certs);
         let built_client = client_builder.build().map_err(reqwest_err_map)?;
 
-        let method = match method_str.to_lowercase().as_str() {
-            "get" => Ok(Method::GET),
-            "post" => Ok(Method::POST),
-            "put" => Ok(Method::PUT),       // not tested
-            "delete" => Ok(Method::DELETE), // not tested
-            other => Err(UpdateError::Other(anyhow::Error::msg(format!(
-                "HTTP request method \"{other}\" not implemented or not valid."
-            )))),
-        }?;
+        let method = match &input.method {
+            HTTPMethod::GET => Method::GET,
+            HTTPMethod::POST => Method::POST,
+            HTTPMethod::PUT => Method::PUT,       // not tested
+            HTTPMethod::DELETE => Method::DELETE, // not tested
+        };
 
-        let response = built_client.request(method, url).body(body).send();
+        let response = built_client.request(method, input.url).body(body).send();
 
         match response {
             Ok(response) => {
+                let headers = response.headers().clone();
+                let response_code = response.status().as_u16();
+                let content_length = response.content_length().unwrap_or_default();
                 let body = response.text().unwrap();
-                self.output.send(body)?; // TODO: return body + headers? Additional header output?
+                self.body_output.send(body.clone())?;
+                let extended_output = ResponseOutput {
+                    body,
+                    headers: convert_header_map(&headers),
+                    response_code,
+                    content_length,
+                };
+                self.extended_output.send(extended_output.clone())?;
                 Ok(())
             }
             Err(e) => Err(UpdateError::Other(anyhow::Error::msg(e.to_string()))),
