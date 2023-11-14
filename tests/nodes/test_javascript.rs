@@ -20,7 +20,7 @@ mod nodes {
     }
 
     #[test]
-    fn evaluate_json() {
+    fn transform_object() {
         let change_observer: ChangeObserver = ChangeObserver::new();
         let mut js_node = JsNode::new(Some(&change_observer));
         js_node

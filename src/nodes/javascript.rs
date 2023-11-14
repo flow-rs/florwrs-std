@@ -37,13 +37,10 @@ where
     fn on_update(&mut self) -> anyhow::Result<(), UpdateError> {
         if let Ok(code) = self.code_input.next() {
             self.code = code;
-        } // XXX: can *actual* errors occur here that we must not ignore?
-        if self.code.is_empty() {
-            return Err(UpdateError::RecvError {
-                message: "no JavaScript code given".to_string(),
-            });
         }
-        let input_obj = self.input.next()?;
+        let Ok(input_obj) = self.input.next() else {
+            return Ok(());
+        };
 
         let mut context = Context::default();
         let js_err_map = |e: JsError| UpdateError::Other(anyhow::Error::msg(e.to_string()));
