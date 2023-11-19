@@ -33,7 +33,7 @@ pub struct ConfigInput {
     pub accept_invalid_certs: Option<bool>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ResponseOutput {
     pub body: String,
     pub headers: HashMap<String, String>,
@@ -50,10 +50,7 @@ pub struct HttpNode {
     pub config_input: Input<ConfigInput>, // struct
 
     #[output]
-    pub body_output: Output<String>,
-
-    #[output]
-    pub extended_output: Output<ResponseOutput>,
+    pub output: Output<ResponseOutput>,
 
     pub timeout: Duration,
     pub accept_invalid_certs: bool,
@@ -64,8 +61,7 @@ impl HttpNode {
         Self {
             data_input: Input::new(),
             config_input: Input::new(),
-            body_output: Output::new(change_observer),
-            extended_output: Output::new(change_observer),
+            output: Output::new(change_observer),
             timeout: Duration::new(30, 0),
             accept_invalid_certs: false,
         }
@@ -147,14 +143,13 @@ impl Node for HttpNode {
                 let response_code = response.status().as_u16();
                 let content_length = response.content_length().unwrap_or_default();
                 let body = response.text().unwrap();
-                self.body_output.send(body.clone())?;
-                let extended_output = ResponseOutput {
+                let output = ResponseOutput {
                     body,
                     headers: convert_header_map(&headers),
                     response_code,
                     content_length,
                 };
-                self.extended_output.send(extended_output.clone())?;
+                self.output.send(output.clone())?;
                 Ok(())
             }
             Err(e) => Err(UpdateError::Other(anyhow::Error::msg(e.to_string()))),
