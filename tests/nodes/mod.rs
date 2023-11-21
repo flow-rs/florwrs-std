@@ -5,3 +5,4 @@ pub mod test_javascript;
 pub mod test_timer;
 pub mod test_value;
 pub mod transform;
+pub mod m1_demo;
