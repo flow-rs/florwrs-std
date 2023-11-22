@@ -41,12 +41,12 @@ mod nodes {
         http_node.on_update().unwrap();
 
         mock.assert(); // checks if the mock server has been called
-        let returned_body = mock_output.next().unwrap();
+        let response_output = mock_output.next().unwrap();
         assert!(
-            returned_body.body == expected_response_body,
+            response_output.body == expected_response_body,
             "expected_body: {}, returned_body: {}",
             expected_response_body,
-            returned_body.body
+            response_output.body
         );
     }
 
@@ -121,9 +121,9 @@ mod nodes {
         let _ = http_node.data_input.send(data_input);
         http_node.on_update().unwrap();
 
-        let extended_output = mock_output.next().unwrap();
-        let response_body: Value = serde_json::from_str(&extended_output.body).unwrap();
+        let response_output = mock_output.next().unwrap();
+        let response_body: Value = serde_json::from_str(&response_output.body).unwrap();
         println!("\n\nResponse from LLM: {}\n\n", response_body["responses"][0]["text"]);
-        assert!(200 == extended_output.response_code);
+        assert!(200 == response_output.response_code);
     }
 }
