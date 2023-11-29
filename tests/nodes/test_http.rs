@@ -377,10 +377,7 @@ mod nodes {
 
         let mut http_node: HttpNode = HttpNode::new(Some(&change_observer));
         let mock_output = Edge::new();
-        connect(
-            http_node.output.clone(),
-            mock_output.clone(),
-        );
+        connect(http_node.output.clone(), mock_output.clone());
         let _ = http_node.config_input.send(config_input);
         let _ = http_node.data_input.send(data_input);
         http_node.on_update().unwrap();

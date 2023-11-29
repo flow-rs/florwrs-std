@@ -55,4 +55,31 @@ function main(input) {
         assert_eq!(result.a, 7);
         assert_eq!(result.b, 3.0)
     }
+
+    #[test]
+    fn load_module() {
+        let change_observer: ChangeObserver = ChangeObserver::new();
+        let mut js_node = JsNode::new(Some(&change_observer));
+        js_node
+            .code_input
+            .send(
+                r#"
+function main() {
+    let calc = require("./scripts/calc.js");
+    let diff = calc.subtract(10, 4); // throws weird index out of bounds error...
+    return diff;
+}
+"#
+                .to_string(),
+            )
+            .unwrap();
+        js_node.input.send(()).unwrap();
+        let mock_output = Edge::<i32>::new();
+        connect(js_node.output.clone(), mock_output.clone());
+        js_node.on_ready().unwrap();
+        js_node.on_update().unwrap();
+
+        let result = mock_output.next().unwrap();
+        assert_eq!(result, 6);
+    }
 }

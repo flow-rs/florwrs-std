@@ -1,4 +1,7 @@
-use boa_engine::{property::Attribute, Context, JsError, JsValue, Source};
+use boa_engine::{
+    property::Attribute, Context, JsArgs, JsError, JsNativeError, JsObject, JsResult, JsValue,
+    NativeFunction, Source,
+};
 use flowrs::{
     connection::{Input, Output},
     node::{ChangeObserver, Node, UpdateError},
@@ -42,8 +45,9 @@ where
             return Ok(());
         };
 
-        let mut context = Context::default();
         let js_err_map = |e: JsError| UpdateError::Other(anyhow::Error::msg(e.to_string()));
+        let mut context = prepare_context().map_err(js_err_map)?;
+
         context
             .eval(Source::from_bytes(&self.code))
             .map_err(js_err_map)?;
@@ -65,4 +69,37 @@ where
         self.output.send(deserialized)?;
         Ok(())
     }
+}
+
+fn prepare_context<'a>() -> anyhow::Result<Context<'a>, JsError> {
+    let mut context = Context::default();
+    // register the "require" function
+    context.register_global_callable("require", 0, NativeFunction::from_fn_ptr(require))?;
+    // Adding custom object that mimics 'module.exports'
+    let moduleobj = JsObject::default();
+    moduleobj.set("exports", JsValue::from(""), false, &mut context)?;
+    context.register_global_property("module", JsValue::from(moduleobj), Attribute::default())?;
+    Ok(context)
+}
+
+// FROM: https://github.com/boa-dev/boa/blob/main/boa_examples/src/bin/modulehandler.rs
+fn require(_: &JsValue, args: &[JsValue], ctx: &mut Context) -> JsResult<JsValue> {
+    let arg = args.get_or_undefined(0);
+
+    let libfile = arg.to_string(ctx)?.to_std_string_escaped();
+
+    // Read the module source file
+    let buffer = std::fs::read_to_string(libfile)
+        .map_err(|e| JsNativeError::typ().with_message(e.to_string()))?;
+    // Load and parse the module source
+    // println!("{buffer}");
+    ctx.eval(Source::from_bytes(&buffer))?;
+
+    // Access module.exports and return as ResultValue
+    let global_obj = ctx.global_object();
+    let module = global_obj.get("module", ctx)?;
+    module
+        .as_object()
+        .ok_or_else(|| JsNativeError::typ().with_message("`exports` property was not an object"))?
+        .get("exports", ctx)
 }

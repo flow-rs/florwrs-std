@@ -7,8 +7,8 @@ mod nodes {
     };
     use flowrs_std::http::{ConfigInput, HTTPMethod, HttpNode, RequestInput};
     use serde_json::json;
-    use std::{collections::HashMap, time::Duration};
     use serde_json::Value;
+    use std::{collections::HashMap, time::Duration};
 
     #[test]
     fn normal_get_request() {
@@ -21,7 +21,7 @@ mod nodes {
 
         // Create a mock
         let mock = server
-            .mock("GET", path.clone())
+            .mock("GET", path)
             .with_status(200)
             .with_body(expected_response_body)
             .create();
@@ -49,7 +49,6 @@ mod nodes {
             response_output.body
         );
     }
-
 
     #[test]
     fn post_request_starcoder_llm() {
@@ -113,17 +112,17 @@ mod nodes {
 
         let mut http_node: HttpNode = HttpNode::new(Some(&change_observer));
         let mock_output = Edge::new();
-        connect(
-            http_node.output.clone(),
-            mock_output.clone(),
-        );
+        connect(http_node.output.clone(), mock_output.clone());
         let _ = http_node.config_input.send(config_input);
         let _ = http_node.data_input.send(data_input);
         http_node.on_update().unwrap();
 
         let response_output = mock_output.next().unwrap();
         let response_body: Value = serde_json::from_str(&response_output.body).unwrap();
-        println!("\n\nResponse from LLM: {}\n\n", response_body["responses"][0]["text"]);
+        println!(
+            "\n\nResponse from LLM: {}\n\n",
+            response_body["responses"][0]["text"]
+        );
         assert!(200 == response_output.response_code);
     }
 }
