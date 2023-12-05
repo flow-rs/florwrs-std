@@ -1,4 +1,7 @@
-let functions = {
+module.exports = {
+    six: function () {
+        return 6;
+    },
     add: function (a, b) {
         return a + b;
     },
@@ -11,10 +14,4 @@ let functions = {
     divide: function (a, b) {
         return a / b;
     },
-
-    six: 6
-};
-
-module.exports = function (a, b) {
-    return a + b;
 };

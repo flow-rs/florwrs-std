@@ -66,7 +66,7 @@ function main(input) {
                 r#"
 function main() {
     let calc = require("./scripts/calc.js");
-    let diff = calc.subtract(10, 4); // throws weird index out of bounds error...
+    let diff = calc.six(); // FIXME: throws weird index out of bounds error if functions have parameters...
     return diff;
 }
 "#
