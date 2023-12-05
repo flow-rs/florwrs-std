@@ -317,44 +317,10 @@ mod nodes {
     #[test]
     #[ignore]
     fn post_request_starcoder() {
-        let url = "https://leonambaum-fastapi.lab.kube.cs.hm.edu/v1/generate";
+        let url = "http://10.28.229.17:3005/v1/generate";
         let method = HTTPMethod::POST;
         let request_body = json!({
-          "prompt": "Provide a Hello World code in Python",
-          "llm_config": {
-            "max_new_tokens": 256,
-            "min_length": 0,
-            "min_new_tokens": 32,
-            "early_stopping": false,
-            "num_beams": 1,
-            "num_beam_groups": 1,
-            "use_cache": true,
-            "temperature": 0.2,
-            "top_k": 50,
-            "top_p": 0.95,
-            "typical_p": 1,
-            "epsilon_cutoff": 0,
-            "eta_cutoff": 0,
-            "diversity_penalty": 0,
-            "repetition_penalty": 1.2,
-            "encoder_repetition_penalty": 1,
-            "length_penalty": 1,
-            "no_repeat_ngram_size": 0,
-            "renormalize_logits": false,
-            "remove_invalid_values": false,
-            "num_return_sequences": 1,
-            "output_attentions": false,
-            "output_hidden_states": false,
-            "output_scores": false,
-            "pad_token_id": 49152,
-            "encoder_no_repeat_ngram_size": 0,
-            "n": 1,
-            "presence_penalty": 0,
-            "frequency_penalty": 0,
-            "use_beam_search": false,
-            "ignore_eos": false
-          },
-          "adapter_name": null
+          "prompt": "Provide a Hello World code in Python"
         });
 
         let change_observer: ChangeObserver = ChangeObserver::new();
@@ -372,7 +338,7 @@ mod nodes {
 
         let config_input = ConfigInput {
             accept_invalid_certs: Some(true),
-            timeout: Some(Duration::from_secs(60)),
+            timeout: Some(Duration::from_secs(15)),
         };
 
         let mut http_node: HttpNode = HttpNode::new(Some(&change_observer));
