@@ -77,7 +77,7 @@ fn prepare_context<'a>() -> anyhow::Result<Context<'a>, JsError> {
     context.register_global_callable("require", 0, NativeFunction::from_fn_ptr(require))?;
     // Adding custom object that mimics 'module.exports'
     let moduleobj = JsObject::default();
-    moduleobj.set("exports", JsValue::from(""), false, &mut context)?;
+    moduleobj.set("exports", JsValue::Undefined, false, &mut context)?;
     context.register_global_property("module", JsValue::from(moduleobj), Attribute::default())?;
     Ok(context)
 }

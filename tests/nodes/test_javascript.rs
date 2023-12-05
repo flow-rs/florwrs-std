@@ -66,8 +66,9 @@ function main(input) {
                 r#"
 function main() {
     let calc = require("./scripts/calc.js");
-    let diff = calc.six(); // FIXME: throws weird index out of bounds error if functions have parameters...
-    return diff;
+    return calc.six(); // FIXME: throws weird index out of bounds error if functions have parameters...
+    // return calc.increment(5); // fails
+    // return calc.add(3, 3); // fails
 }
 "#
                 .to_string(),
