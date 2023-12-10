@@ -6,6 +6,8 @@ mod nodes {
         node::{ChangeObserver, Node},
     };
     use flowrs_std::http::{ConfigInput, HTTPMethod, HttpNode, RequestInput};
+    use flowrs_std::nodes::javascript::JsNode;
+    use flowrs_std::value::ValueNode;
     use serde_json::json;
     use std::{collections::HashMap, time::Duration};
 
@@ -354,4 +356,50 @@ mod nodes {
         let extended_output = mock_output.next().unwrap();
         assert!(200 == extended_output.response_code);
     }
+
+    #[test]
+    #[ignore]
+    fn complete_flow_test() {
+        let code = r#"function main(input) { 
+            return { 
+                url: "http://10.28.229.17:3005/v1/generate", 
+                method: "POST", 
+                headers: {"content-type": "application/json"}, 
+                body: "{ \"prompt\": \"" + input + "\" }"
+                };
+        }"#;
+
+        let value_input = "Provide a Hello World code in Python.";
+
+        let change_observer: ChangeObserver = ChangeObserver::new();
+
+        let config_input = ConfigInput {
+            accept_invalid_certs: Some(true),
+            timeout: Some(Duration::from_secs(15)),
+        };
+
+        let code_value_node: ValueNode<String> = ValueNode::new(code.to_string(), Some(&change_observer));
+        let prompt_value_node: ValueNode<String> = ValueNode::new(value_input.to_string(), Some(&change_observer));
+        let mut js_node: JsNode<String, RequestInput> = JsNode::new(Some(&change_observer));
+        let mut http_node: HttpNode = HttpNode::new(Some(&change_observer));
+
+        let mock_output = Edge::new();
+        connect(code_value_node.output.clone(), js_node.code_input.clone());
+        connect(prompt_value_node.output.clone(), js_node.input.clone());
+        connect(js_node.output.clone(), http_node.data_input.clone());
+        connect(
+            http_node.output.clone(),
+            mock_output.clone(),
+        );
+        http_node.config_input.send(config_input).unwrap();
+        code_value_node.on_ready().unwrap();
+        prompt_value_node.on_ready().unwrap();
+        js_node.on_update().unwrap();
+        http_node.on_update().unwrap();
+
+        let extended_output = mock_output.next().unwrap();
+        assert!(200 == extended_output.response_code);
+    }
+
+
 }

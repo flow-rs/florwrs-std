@@ -12,7 +12,8 @@ use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy)]
+
+#[derive(Clone, Copy, Deserialize)]
 pub enum HTTPMethod {
     GET,
     POST,
@@ -20,7 +21,7 @@ pub enum HTTPMethod {
     DELETE,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize)]
 pub struct RequestInput {
     pub url: String,
     pub method: HTTPMethod,
