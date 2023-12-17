@@ -33,3 +33,8 @@ getrandom = { version = "0.2", features = ["js"] }
 
 [dev-dependencies]
 mockito = "1.2"
+criterion = "0.5"
+
+[[bench]]
+name = "js_benchmark"
+harness = false
