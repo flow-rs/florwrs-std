@@ -3,7 +3,7 @@ pub mod nodes;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 pub use self::nodes::debug;
-pub use self::nodes::http;
+//pub use self::nodes::http;
 pub use self::nodes::timer;
 pub use self::nodes::value;
 
