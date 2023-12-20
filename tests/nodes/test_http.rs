@@ -375,8 +375,10 @@ mod nodes {
             timeout: Some(Duration::from_secs(15)),
         };
 
-        let code_value_node: ValueNode<String> = ValueNode::new(code.to_string(), Some(&change_observer));
-        let prompt_value_node: ValueNode<String> = ValueNode::new(value_input.to_string(), Some(&change_observer));
+        let code_value_node: ValueNode<String> =
+            ValueNode::new(code.to_string(), Some(&change_observer));
+        let prompt_value_node: ValueNode<String> =
+            ValueNode::new(value_input.to_string(), Some(&change_observer));
         let mut js_node: JsNode<String, RequestInput> = JsNode::new(Some(&change_observer));
         let mut http_node: HttpNode = HttpNode::new(Some(&change_observer));
 
@@ -384,10 +386,7 @@ mod nodes {
         connect(code_value_node.output.clone(), js_node.code_input.clone());
         connect(prompt_value_node.output.clone(), js_node.input.clone());
         connect(js_node.output.clone(), http_node.data_input.clone());
-        connect(
-            http_node.output.clone(),
-            mock_output.clone(),
-        );
+        connect(http_node.output.clone(), mock_output.clone());
         http_node.config_input.send(config_input).unwrap();
         code_value_node.on_ready().unwrap();
         prompt_value_node.on_ready().unwrap();
@@ -397,6 +396,4 @@ mod nodes {
         let extended_output = mock_output.next().unwrap();
         assert!(200 == extended_output.response_code);
     }
-
-
 }

@@ -12,7 +12,6 @@ use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Clone, Copy, Deserialize)]
 pub enum HTTPMethod {
     GET,
