@@ -9,12 +9,17 @@ use flowrs::{
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
+/// Node that runs JavaScript code which can be dynamically changed at runtime.
+/// The input and output of the JS-Program are generic
 #[derive(RuntimeConnectable, Deserialize, Serialize)]
 pub struct JsNode<I, O> {
+    /// the input of the JavaScript program
     #[input]
     pub input: Input<I>,
+    /// the JavaScript code to run
     #[input]
     pub code_input: Input<String>,
+    /// the output of the JavaScript program
     #[output]
     pub output: Output<O>,
 
@@ -37,6 +42,20 @@ where
     I: Send + Serialize,
     O: Send + DeserializeOwned,
 {
+    /// Executes the JavaScript code from [JsNode::code_input] with the given
+    /// [JsNode::input]. This should return a value which is deserialized into [JsNode::output].
+    /// If there is a runtime error or the type of the returned value
+    /// cannot be turned into [JsNode::output] via serde_json, an error is returned.
+    /// The JavaScript code must include a `main()` function with an optional input parameter, e.g.:
+    /// ```javascript
+    /// function main(input) {
+    ///     let output = {
+    ///         a: Math.sqrt(input.a),
+    ///         b: 42
+    ///     };
+    ///     return output;
+    /// }
+    /// ```
     fn on_update(&mut self) -> anyhow::Result<(), UpdateError> {
         if let Ok(code) = self.code_input.next() {
             self.code = code;
@@ -71,6 +90,10 @@ where
     }
 }
 
+/// creates an execution context for the JavaScript environment
+/// and adds support for `module.exports`/`require()`
+/// NOTE that a bug in boa_engine currently prevents `require()` from working as intended:
+/// https://github.com/boa-dev/boa/issues/3502
 fn prepare_context<'a>() -> anyhow::Result<Context<'a>, JsError> {
     let mut context = Context::default();
     // register the "require" function
@@ -82,7 +105,8 @@ fn prepare_context<'a>() -> anyhow::Result<Context<'a>, JsError> {
     Ok(context)
 }
 
-// FROM: https://github.com/boa-dev/boa/blob/main/boa_examples/src/bin/modulehandler.rs
+/// mimicks the behaviour of the require() function in JavaScript <br>
+/// FROM: https://github.com/boa-dev/boa/blob/main/boa_examples/src/bin/modulehandler.rs
 fn require(_: &JsValue, args: &[JsValue], ctx: &mut Context) -> JsResult<JsValue> {
     let arg = args.get_or_undefined(0);
 
@@ -92,7 +116,6 @@ fn require(_: &JsValue, args: &[JsValue], ctx: &mut Context) -> JsResult<JsValue
     let buffer = std::fs::read_to_string(libfile)
         .map_err(|e| JsNativeError::typ().with_message(e.to_string()))?;
     // Load and parse the module source
-    // println!("{buffer}");
     ctx.eval(Source::from_bytes(&buffer))?;
 
     // Access module.exports and return as ResultValue
