@@ -143,7 +143,7 @@ impl Node for HttpNode {
     ///
     /// // Create a mock
     /// let mock = server
-    ///     .mock("GET", path.clone())
+    ///     .mock("GET", path)
     ///     .with_status(200)
     ///     .with_body(expected_response_body)
     ///     .create();
@@ -172,7 +172,7 @@ impl Node for HttpNode {
     /// mock.assert(); // checks if the mock server has been called
     /// let returned_body = mock_output.next().unwrap();
     /// assert!(returned_body.body == expected_response_body);
-    /// assert!(http_node.timeout == Duration::from_millis(new_timeout));
+    /// assert!(http_node.timeout() == Duration::from_millis(new_timeout));
     /// ```
     fn on_update(&mut self) -> Result<(), UpdateError> {
         if let Ok(config) = self.config_input.next() {
