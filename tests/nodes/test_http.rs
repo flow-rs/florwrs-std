@@ -22,7 +22,7 @@ mod nodes {
 
         // Create a mock
         let mock = server
-            .mock("GET", path.clone())
+            .mock("GET", path)
             .with_status(200)
             .with_body(expected_response_body)
             .create();
@@ -62,7 +62,7 @@ mod nodes {
 
         // Create a mock
         let mock = server
-            .mock("GET", path.clone())
+            .mock("GET", path)
             .with_status(200)
             .with_body(expected_response_body)
             .create();
@@ -85,13 +85,13 @@ mod nodes {
         connect(http_node.output.clone(), mock_output.clone());
         let _ = http_node.config_input.send(config_input);
         let _ = http_node.data_input.send(data_input.clone());
-        let initial_timeout = http_node.timeout;
+        let initial_timeout = http_node.timeout();
         http_node.on_update().unwrap();
 
         mock.assert(); // checks if the mock server has been called
         let returned_body = mock_output.next().unwrap();
-        assert!(initial_timeout != http_node.timeout);
-        assert!(http_node.timeout == Duration::from_millis(new_timeout));
+        assert!(initial_timeout != http_node.timeout());
+        assert!(http_node.timeout() == Duration::from_millis(new_timeout));
         assert!(
             returned_body.body == expected_response_body,
             "expected_body: {}, returned_body: {}",
@@ -113,7 +113,7 @@ mod nodes {
 
         // Create a mock
         let mock = server
-            .mock("GET", path.clone())
+            .mock("GET", path)
             .with_status(200)
             .match_header(&content_type_header.0, content_type_header.1)
             .match_header(&x_api_key_header.0, x_api_key_header.1)
@@ -171,7 +171,7 @@ mod nodes {
 
         // Create a mock server, which also checks the request body.
         let mock = server
-            .mock("POST", path.clone())
+            .mock("POST", path)
             .match_body(serde_json::to_string(&request_body).unwrap().as_str())
             .with_status(200)
             .with_body(expected_response_body)
@@ -215,7 +215,7 @@ mod nodes {
 
         // Create a mock
         let mock = server
-            .mock("GET", path.clone())
+            .mock("GET", path)
             .with_status(200)
             .match_header(&content_type_header.0, content_type_header.1)
             .match_header(&x_api_key_header.0, x_api_key_header.1)
@@ -272,7 +272,7 @@ mod nodes {
 
         // Create a mock
         let mock = server
-            .mock("GET", path.clone())
+            .mock("GET", path)
             .with_status(expected_response_code)
             .match_header(&content_type_header.0, content_type_header.1)
             .match_header(&x_api_key_header.0, x_api_key_header.1)

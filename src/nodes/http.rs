@@ -64,10 +64,8 @@ pub struct HttpNode {
     #[output]
     pub output: Output<ResponseOutput>,
 
-    /// Timeout for all HTTP Requests. This parameter is set via [`Self::config_input`].
-    pub timeout: Duration,
-    /// Controls if the HTTP client should accept invalid certificates. **Dangerous! Use only in development!** This parameter is set via [`Self::config_input`].
-    pub accept_invalid_certs: bool,
+    timeout: Duration,
+    accept_invalid_certs: bool,
 }
 
 impl HttpNode {
@@ -77,11 +75,21 @@ impl HttpNode {
             data_input: Input::new(),
             config_input: Input::new(),
             output: Output::new(change_observer),
-            /// Default timeout configuration.
+            // Default timeout configuration.
             timeout: Duration::new(30, 0),
-            /// By default invalid certificates are not accepted.
+            // By default invalid certificates are not accepted.
             accept_invalid_certs: false,
         }
+    }
+
+    /// Shows if the HTTP client accepts invalid certificates. **Dangerous! Should only be set to `true` in development!** This parameter is set via [`Self::config_input`].
+    pub fn accept_invalid_certs(&self) -> bool {
+        self.accept_invalid_certs
+    }
+
+    /// Timeout for all HTTP Requests. This parameter is set via [`Self::config_input`].
+    pub fn timeout(&self) -> Duration {
+        self.timeout
     }
 }
 
