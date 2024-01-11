@@ -10,7 +10,7 @@ pub struct FileWriterConfig {
     file: String
 }
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct FileReaderConfig {
     file: String
 }
@@ -125,7 +125,4 @@ fn test_file_read_and_write() {
 
     //println!("{:?}", odd_res_nums);
     //println!("{:?}", even_res_nums);
-    
-   
-    
 }
