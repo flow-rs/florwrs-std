@@ -37,7 +37,7 @@ where
 
     fn on_update(&mut self) -> Result<(), UpdateError> {
         if let Ok(input) = self.input.next() {
-            println!("{:?} {:?} DEBUG", std::thread::current().id(),input);
+            log::info!("{:?} {:?} DEBUG", std::thread::current().id(),input);
             #[cfg(target_arch = "wasm32")]
             crate::log(format!("{:?} {:?} DEBUG", std::thread::current().id(),input).as_str());
 
