@@ -8,7 +8,7 @@ mod nodes {
     use flowrs_std::http::{ConfigInput, HTTPMethod, HttpNode, RequestInput};
     use flowrs_std::nodes::javascript::JsNode;
     use flowrs_std::value::ValueNode;
-    use serde_json::json;
+    use serde_json::{json, Value};
     use std::{collections::HashMap, time::Duration};
 
     #[test]
@@ -42,12 +42,12 @@ mod nodes {
         http_node.on_update().unwrap();
 
         mock.assert(); // checks if the mock server has been called
-        let returned_body = mock_output.next().unwrap();
+        let response = mock_output.next().unwrap();
         assert!(
-            returned_body.body == expected_response_body,
+            response.body == expected_response_body,
             "expected_body: {}, returned_body: {}",
             expected_response_body,
-            returned_body.body
+            response.body
         );
     }
 
@@ -89,14 +89,14 @@ mod nodes {
         http_node.on_update().unwrap();
 
         mock.assert(); // checks if the mock server has been called
-        let returned_body = mock_output.next().unwrap();
+        let response = mock_output.next().unwrap();
         assert!(initial_timeout != http_node.timeout());
         assert!(http_node.timeout() == Duration::from_millis(new_timeout));
         assert!(
-            returned_body.body == expected_response_body,
+            response.body == expected_response_body,
             "expected_body: {}, returned_body: {}",
             expected_response_body,
-            returned_body.body
+            response.body
         );
     }
 
@@ -147,12 +147,12 @@ mod nodes {
         http_node.on_update().unwrap();
 
         mock.assert(); // checks if the mock server has been called
-        let returned_body = mock_output.next().unwrap();
+        let response = mock_output.next().unwrap();
         assert!(
-            returned_body.body == expected_response_body,
+            response.body == expected_response_body,
             "expected_body: {}, returned_body: {}",
             expected_response_body,
-            returned_body.body
+            response.body
         );
     }
 
@@ -193,12 +193,12 @@ mod nodes {
         http_node.on_update().unwrap();
 
         mock.assert(); // checks if the mock server has been called
-        let returned_body = mock_output.next().unwrap();
+        let response = mock_output.next().unwrap();
         assert!(
-            returned_body.body == expected_response_body,
+            response.body == expected_response_body,
             "expected_body: {}, returned_body: {}",
             expected_response_body,
-            returned_body.body
+            response.body
         );
     }
 
@@ -249,12 +249,12 @@ mod nodes {
         http_node.on_update().unwrap();
 
         mock.assert(); // checks if the mock server has been called
-        let returned_body = mock_output.next().unwrap();
+        let response = mock_output.next().unwrap();
         assert!(
-            returned_body.body == expected_response_body,
+            response.body == expected_response_body,
             "expected_body: {}, returned_body: {}",
             expected_response_body,
-            returned_body.body
+            response.body
         );
     }
 
@@ -306,14 +306,219 @@ mod nodes {
         http_node.on_update().unwrap();
 
         mock.assert(); // checks if the mock server has been called
-        let returned_body = mock_output.next().unwrap();
+        let response = mock_output.next().unwrap();
         assert!(
-            returned_body.body == expected_response_body,
+            response.body == expected_response_body,
             "expected_body: {}, returned_body: {}",
             expected_response_body,
-            returned_body.body
+            response.body
         );
-        assert!(returned_body.response_code == expected_response_code as u16);
+        assert!(response.response_code == expected_response_code as u16);
+    }
+
+    #[test]
+    fn put_request() {
+        let mut server = mockito::Server::new();
+
+        let url = server.url();
+        let method = HTTPMethod::PUT;
+        let path = "/hello&question=how%20are%20you";
+        let expected_response_body = "Hello World!";
+
+        // Create a mock
+        let mock = server
+            .mock("PUT", path)
+            .with_status(200)
+            .with_body(expected_response_body)
+            .create();
+
+        let change_observer: ChangeObserver = ChangeObserver::new();
+        let data_input = RequestInput {
+            url: url.to_string() + path,
+            method,
+            headers: HashMap::new(),
+            body: None,
+        };
+
+        let mut http_node: HttpNode = HttpNode::new(Some(&change_observer));
+        let mock_output = Edge::new();
+        connect(http_node.output.clone(), mock_output.clone());
+        let _ = http_node.data_input.send(data_input);
+        http_node.on_update().unwrap();
+
+        mock.assert(); // checks if the mock server has been called
+        let response = mock_output.next().unwrap();
+        assert!(
+            response.body == expected_response_body,
+            "expected_body: {}, returned_body: {}",
+            expected_response_body,
+            response.body
+        );
+    }
+
+    #[test]
+    fn delete_request() {
+        let mut server = mockito::Server::new();
+
+        let url = server.url();
+        let method = HTTPMethod::DELETE;
+        let path = "/hello&question=how%20are%20you";
+        let expected_response_body = "Hello World!";
+
+        // Create a mock
+        let mock = server
+            .mock("DELETE", path)
+            .with_status(200)
+            .with_body(expected_response_body)
+            .create();
+
+        let change_observer: ChangeObserver = ChangeObserver::new();
+        let data_input = RequestInput {
+            url: url.to_string() + path,
+            method,
+            headers: HashMap::new(),
+            body: None,
+        };
+
+        let mut http_node: HttpNode = HttpNode::new(Some(&change_observer));
+        let mock_output = Edge::new();
+        connect(http_node.output.clone(), mock_output.clone());
+        let _ = http_node.data_input.send(data_input);
+        http_node.on_update().unwrap();
+
+        mock.assert(); // checks if the mock server has been called
+        let response = mock_output.next().unwrap();
+        assert!(
+            response.body == expected_response_body,
+            "expected_body: {}, returned_body: {}",
+            expected_response_body,
+            response.body
+        );
+    }
+
+    #[test]
+    fn head_request() {
+        let mut server = mockito::Server::new();
+
+        let url = server.url();
+        let method = HTTPMethod::HEAD;
+        let path = "/hello&question=how%20are%20you";
+        let expected_response_body = "Hello World!";
+
+        // Create a mock
+        let mock = server
+            .mock("HEAD", path)
+            .with_status(200)
+            .with_body(expected_response_body)
+            .create();
+
+        let change_observer: ChangeObserver = ChangeObserver::new();
+        let data_input = RequestInput {
+            url: url.to_string() + path,
+            method,
+            headers: HashMap::new(),
+            body: None,
+        };
+
+        let mut http_node: HttpNode = HttpNode::new(Some(&change_observer));
+        let mock_output = Edge::new();
+        connect(http_node.output.clone(), mock_output.clone());
+        let _ = http_node.data_input.send(data_input);
+        http_node.on_update().unwrap();
+
+        mock.assert(); // checks if the mock server has been called
+        let return_object = mock_output.next().unwrap();
+        assert!(
+            return_object.body == "",
+            "Returned body should be empty, as it is a head request, actual returned_body: {}",
+            return_object.body
+        );
+        assert!(
+            return_object.response_code == 200,
+            "expected response code: {}, actual response code: {}",
+            200,
+            return_object.response_code
+        );
+    }
+
+    #[test]
+    fn patch_request() {
+        let mut server = mockito::Server::new();
+
+        let url = server.url();
+        let method = HTTPMethod::PATCH;
+        let path = "/hello&question=how%20are%20you";
+        let expected_response_body = "Hello World!";
+
+        // Create a mock
+        let mock = server
+            .mock("PATCH", path)
+            .with_status(200)
+            .with_body(expected_response_body)
+            .create();
+
+        let change_observer: ChangeObserver = ChangeObserver::new();
+        let data_input = RequestInput {
+            url: url.to_string() + path,
+            method,
+            headers: HashMap::new(),
+            body: None,
+        };
+
+        let mut http_node: HttpNode = HttpNode::new(Some(&change_observer));
+        let mock_output = Edge::new();
+        connect(http_node.output.clone(), mock_output.clone());
+        let _ = http_node.data_input.send(data_input);
+        http_node.on_update().unwrap();
+
+        mock.assert(); // checks if the mock server has been called
+        let response = mock_output.next().unwrap();
+        assert!(
+            response.body == expected_response_body,
+            "expected_body: {}, returned_body: {}",
+            expected_response_body,
+            response.body
+        );
+    }
+
+    #[test]
+    fn options_request() {
+        let mut server = mockito::Server::new();
+
+        let url = server.url();
+        let method = HTTPMethod::OPTIONS;
+        let path = "/hello&question=how%20are%20you";
+        let expected_response_body = "Hello World!";
+
+        // Create a mock
+        let mock = server
+            .mock("OPTIONS", path)
+            .with_status(200)
+            .with_body(expected_response_body)
+            .create();
+
+        let change_observer: ChangeObserver = ChangeObserver::new();
+        let data_input = RequestInput {
+            url: url.to_string() + path,
+            method,
+            headers: HashMap::new(),
+            body: None,
+        };
+
+        let mut http_node: HttpNode = HttpNode::new(Some(&change_observer));
+        let mock_output = Edge::new();
+        connect(http_node.output.clone(), mock_output.clone());
+        let _ = http_node.data_input.send(data_input);
+        http_node.on_update().unwrap();
+
+        mock.assert(); // checks if the mock server has been called
+        let response = mock_output.next().unwrap();
+        assert!(
+            response.body == expected_response_body,
+            "expected_body: {}, returned_body: {}",
+            expected_response_body,
+            response.body
+        );
     }
 
     #[test]
@@ -354,27 +559,32 @@ mod nodes {
         assert!(200 == extended_output.response_code);
     }
 
+    /// Test for presenation purposes to show the complete flow of the Coding Assistant
     #[test]
     #[ignore]
     fn complete_flow_test() {
+
+        // JavaScript which constructs the request object for HTTP Node
         let code = r#"function main(input) { 
             return { 
-                url: "http://10.28.229.17:3007/v1/generate", 
+                url: "http://10.28.229.17:3006/v1/generate", 
                 method: "POST", 
                 headers: {"content-type": "application/json"}, 
-                body: "{ \"prompt\": \"" + input + "\" }"
-                };
+                body: "{ \"prompt\": \"" + input + "\",  \"llm_config\": { \"temperature\": 0.2, \"max_new_tokens\": 500 }}"} ;
         }"#;
 
-        let value_input = "Give me a small list comprehension example in Python.";
+        // Prompt for Coding Assistant backend
+        let value_input = "def list_comprehension_example():";
 
         let change_observer: ChangeObserver = ChangeObserver::new();
 
+        // ConfigInput object which configures the HTTP Node
         let config_input = ConfigInput {
             accept_invalid_certs: Some(true),
             timeout: Some(Duration::from_secs(15)),
         };
 
+        // Construction of all necessary nodes for test
         let code_value_node: ValueNode<String> =
             ValueNode::new(code.to_string(), Some(&change_observer));
         let prompt_value_node: ValueNode<String> =
@@ -382,11 +592,14 @@ mod nodes {
         let mut js_node: JsNode<String, RequestInput> = JsNode::new(Some(&change_observer));
         let mut http_node: HttpNode = HttpNode::new(Some(&change_observer));
 
+        // Connection of all nodes
         let mock_output = Edge::new();
         connect(code_value_node.output.clone(), js_node.code_input.clone());
         connect(prompt_value_node.output.clone(), js_node.input.clone());
         connect(js_node.output.clone(), http_node.data_input.clone());
         connect(http_node.output.clone(), mock_output.clone());
+
+        // Executing the complete flow to send a request to the Coding Assistant backend
         http_node.config_input.send(config_input).unwrap();
         code_value_node.on_ready().unwrap();
         prompt_value_node.on_ready().unwrap();
@@ -394,7 +607,12 @@ mod nodes {
         http_node.on_update().unwrap();
 
         let extended_output = mock_output.next().unwrap();
-        print!("{}", extended_output.body);
+        // print!("{}", extended_output.body);
+        let res_str = extended_output.body.as_str();
+        let response_json: Value = serde_json::from_str(res_str).unwrap();
+        let response = response_json["outputs"][0]["text"].to_string().replace("\\n", "\n");
+        print!("Response:\n\n{}\n\n", response);
+        
         assert!(200 == extended_output.response_code);
     }
 }

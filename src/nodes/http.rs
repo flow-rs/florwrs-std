@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::time::Duration;
+use log::{warn, debug};
 
 use flowrs::RuntimeConnectable;
 use flowrs::{
@@ -13,16 +14,19 @@ use reqwest::Method;
 use serde::{Deserialize, Serialize};
 
 /// Own implementation of a HttpMethod enum in order to achieve abstraction of the used HTTP request library.
-#[derive(Clone, Copy, Deserialize)]
+#[derive(Clone, Copy, Deserialize, Debug)]
 pub enum HTTPMethod {
     GET,
     POST,
     PUT,
     DELETE,
+    HEAD,
+    OPTIONS,
+    PATCH
 }
 
 /// Object to specify a HTTP request and is supplied via [`HttpNode::data_input`].
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, Debug)]
 pub struct RequestInput {
     pub url: String,
     pub method: HTTPMethod,
@@ -32,7 +36,7 @@ pub struct RequestInput {
 }
 
 /// Configures [`HttpNode`] for all future requests if supplied once via [`HttpNode::config_input`]. If never supplied, the default configuration is used (see source of [`HttpNode::new()`]).
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, Debug)]
 pub struct ConfigInput {
     /// Timeout for all HTTP Requests.
     pub timeout: Option<Duration>,
@@ -99,13 +103,17 @@ fn extract_key_value_pairs(raw_header_hashmap: &HashMap<String, String>) -> Head
     for (key, value) in raw_header_hashmap {
         let header_name = HeaderName::from_str(&key.to_lowercase());
         if header_name.is_err() {
+            warn!("Invalid header name (and its header value) is discarded and is not sent with request: {}", key);
             continue;
         }
 
         let value_str = &value.to_lowercase();
-        let header_value =
-            HeaderValue::from_str(&value_str).unwrap_or_else(|_| HeaderValue::from_static(""));
-        header_map.insert(header_name.unwrap(), header_value);
+        let header_value = HeaderValue::from_str(&value_str);
+        if header_value.is_err() {
+            warn!("Invalid header value is discarded and complete header key-value pair is not sent with request: {}: {}", header_name.unwrap(), value);
+            continue;
+        }
+        header_map.insert(header_name.unwrap(), header_value.unwrap());
     }
 
     header_map
@@ -118,7 +126,7 @@ fn convert_header_map(header_map: &HeaderMap) -> HashMap<String, String> {
         let key_str = key.as_str().to_string();
         hash_map.insert(key_str, value.to_str().unwrap().to_string());
     }
-
+    debug!("Conversion result of received HeaderMap into HashMap: {:?}", hash_map);
     hash_map
 }
 
@@ -178,26 +186,30 @@ impl Node for HttpNode {
         if let Ok(config) = self.config_input.next() {
             if let Some(timeout) = config.timeout {
                 self.timeout = timeout;
+                debug!("New timeout for HTTP requests: {:?}", self.timeout)
             }
             if let Some(accept_invalid_certs) = config.accept_invalid_certs {
                 self.accept_invalid_certs = accept_invalid_certs;
+                debug!("New accept_invalid_certs for HTTP requests: {:?}", self.accept_invalid_certs)
             }
         }
 
         let Ok(input) = self.data_input.next() else {
             return Ok(());
         };
+        debug!("Received RequestInput object: {:?}", input);
 
         let mut client_builder = Client::builder();
 
         let headers = extract_key_value_pairs(&input.headers);
+        debug!("Headers parsed into HeaderMap: {:?}", headers);
 
         let body = input.body.unwrap_or_default();
-        //let body = serde_json::to_string(&body_value).unwrap_or_default();
 
         let reqwest_err_map =
             |e: reqwest::Error| UpdateError::Other(anyhow::Error::msg(e.to_string()));
 
+        debug!("Current configuration: timeout: {:?}, accept_invalid_certs: {:?}", self.timeout, self.accept_invalid_certs);
         client_builder = client_builder
             .default_headers(headers)
             .timeout(self.timeout)
@@ -207,18 +219,24 @@ impl Node for HttpNode {
         let method = match &input.method {
             HTTPMethod::GET => Method::GET,
             HTTPMethod::POST => Method::POST,
-            HTTPMethod::PUT => Method::PUT,       // not tested
-            HTTPMethod::DELETE => Method::DELETE, // not tested
+            HTTPMethod::PUT => Method::PUT,
+            HTTPMethod::OPTIONS => Method::OPTIONS,
+            HTTPMethod::DELETE => Method::DELETE,
+            HTTPMethod::HEAD => Method::HEAD,
+            HTTPMethod::PATCH => Method::PATCH,
         };
 
         let response = built_client.request(method, input.url).body(body).send();
 
         match response {
             Ok(response) => {
+                debug!("Received response: {:?}", response);
+                debug!("Received response headers: {:?}", response.headers());
                 let headers = response.headers().clone();
                 let response_code = response.status().as_u16();
                 let content_length = response.content_length().unwrap_or_default();
                 let body = response.text().unwrap();
+                debug!("Received response body: {:?}", body);
                 let output = ResponseOutput {
                     body,
                     headers: convert_header_map(&headers),
