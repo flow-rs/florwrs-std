@@ -21,7 +21,7 @@ impl<I> ValueNode<I>
 where
     I: Clone,
 {
-    pub fn new(value: I, change_observer: Option<&ChangeObserver>) -> Self {
+    pub fn new(#[bla] value: I, change_observer: Option<&ChangeObserver>) -> Self {
         Self {
             value,
             output: Output::new(change_observer),
