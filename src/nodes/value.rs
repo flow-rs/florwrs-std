@@ -1,10 +1,9 @@
+use flowrs::RuntimeConnectable;
 use flowrs::{
     connection::Output,
-    node::{ChangeObserver, ReadyError, Node, UpdateError},
+    node::{ChangeObserver, Node, ReadyError, UpdateError},
 };
-use flowrs::RuntimeConnectable;
 use serde::{Deserialize, Serialize};
-
 
 #[derive(RuntimeConnectable, Deserialize, Serialize)]
 pub struct ValueNode<I>
@@ -12,7 +11,7 @@ where
     I: Clone,
 {
     value: I,
-    
+
     #[output]
     pub output: Output<I>,
 }
@@ -21,7 +20,7 @@ impl<I> ValueNode<I>
 where
     I: Clone,
 {
-    pub fn new(#[bla] value: I, change_observer: Option<&ChangeObserver>) -> Self {
+    pub fn new(value: I, change_observer: Option<&ChangeObserver>) -> Self {
         Self {
             value,
             output: Output::new(change_observer),
@@ -33,8 +32,11 @@ impl<I> Node for ValueNode<I>
 where
     I: Clone + Send,
 {
-    fn on_ready(&self) -> Result<(), ReadyError>{
-        self.output.clone().send(self.value.clone()).map_err(|e| ReadyError::Other(e.into()))?;   
+    fn on_ready(&self) -> Result<(), ReadyError> {
+        self.output
+            .clone()
+            .send(self.value.clone())
+            .map_err(|e| ReadyError::Other(e.into()))?;
         Ok(())
     }
 }
@@ -45,7 +47,7 @@ where
     I: Clone,
 {
     value: I,
-    
+
     #[output]
     pub output: Output<I>,
 }
@@ -66,9 +68,8 @@ impl<I> Node for ValueUpdateNode<I>
 where
     I: Clone + Send,
 {
-    fn on_update(&mut self) -> Result<(), UpdateError>{
-        self.output.clone().send(self.value.clone())?;   
+    fn on_update(&mut self) -> Result<(), UpdateError> {
+        self.output.clone().send(self.value.clone())?;
         Ok(())
     }
 }
-
