@@ -1,20 +1,25 @@
-use std::ops::Div;
+use super::binops::BinOpState;
+use crate::handle_sequentially;
+use flowrs::RuntimeConnectable;
 use flowrs::{
     connection::{Input, Output},
     node::{ChangeObserver, Node, UpdateError},
 };
-use flowrs::RuntimeConnectable;
-use serde::{Serialize, Deserialize};
-use crate::handle_sequentially;
-use super::binops::BinOpState;
+use serde::{Deserialize, Serialize};
+use std::fmt;
+use std::ops::Div;
+use std::str::FromStr;
 
 #[derive(RuntimeConnectable, Deserialize, Serialize)]
 pub struct DivNode<I1, I2, O>
 where
     I1: Clone,
+    I1: fmt::Debug,
+    I1: FromStr,
     I2: Clone,
+    I2: fmt::Debug,
+    I2: FromStr,
 {
-    
     state: BinOpState<I1, I2>,
 
     #[input]
@@ -33,7 +38,6 @@ where
 {
     pub fn new(change_observer: Option<&ChangeObserver>) -> Self {
         Self {
-           
             state: BinOpState::None,
             input_1: Input::new(),
             input_2: Input::new(),
@@ -82,7 +86,6 @@ where
     I2: Clone + Send,
     O: Clone + Send,
 {
-
     handle_sequentially!(input_1, input_2, handle_1, handle_2);
 }
 

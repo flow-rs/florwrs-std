@@ -1,75 +1,106 @@
-use flowrs::RuntimeConnectable;
+use std::fmt;
+use std::str::FromStr;
+
+use flowrs::comm::communication::NodeCommunicator;
+//use flowrs::RuntimeConnectable;
 use flowrs::{
     connection::Output,
-    node::{ChangeObserver, Node, ReadyError, UpdateError},
+    node::{Node, ReadyError, UpdateError},
 };
-use serde::{Deserialize, Serialize};
 
-#[derive(RuntimeConnectable, Deserialize, Serialize)]
+//#[derive(RuntimeConnectable)]
 pub struct ValueNode<I>
 where
     I: Clone,
+    I: fmt::Debug,
+    I: FromStr,
 {
     value: I,
 
-    #[output]
+    //#[output]
     pub output: Output<I>,
 }
 
 impl<I> ValueNode<I>
 where
     I: Clone,
+    I: fmt::Debug,
+    I: FromStr,
+    I: Send + 'static,
 {
-    pub fn new(value: I, change_observer: Option<&ChangeObserver>) -> Self {
+    // pub fn new(value: I, change_observer: Option<&ChangeObserver>) -> Self {
+    //     Self {
+    //         value,
+    //         output: Output::new(change_observer),
+    //     }
+    // }
+    pub fn new(value: I, output_communicator: NodeCommunicator<I>) -> Self {
         Self {
             value,
-            output: Output::new(change_observer),
+            output: Output::new(output_communicator),
         }
     }
 }
 
 impl<I> Node for ValueNode<I>
 where
-    I: Clone + Send,
+    I: Clone,
+    I: fmt::Debug,
+    I: FromStr,
+    I: Send + 'static,
 {
-    fn on_ready(&self) -> Result<(), ReadyError> {
+    fn on_ready(&mut self) -> Result<(), ReadyError> {
         self.output
-            .clone()
             .send(self.value.clone())
             .map_err(|e| ReadyError::Other(e.into()))?;
         Ok(())
     }
 }
 
-#[derive(RuntimeConnectable, Deserialize, Serialize)]
+//#[derive(RuntimeConnectable)]
 pub struct ValueUpdateNode<I>
 where
     I: Clone,
+    I: fmt::Debug,
+    I: FromStr,
+    I: Send + 'static,
 {
     value: I,
 
-    #[output]
+    //#[output]
     pub output: Output<I>,
 }
 
 impl<I> ValueUpdateNode<I>
 where
     I: Clone,
+    I: fmt::Debug,
+    I: FromStr,
+    I: Send + 'static,
 {
-    pub fn new(value: I, change_observer: Option<&ChangeObserver>) -> Self {
+    // pub fn new(value: I, change_observer: Option<&ChangeObserver>) -> Self {
+    //     Self {
+    //         value,
+    //         output: Output::new(change_observer),
+    //     }
+    // }
+    pub fn new(value: I, output_communicator: NodeCommunicator<I>) -> Self {
         Self {
             value,
-            output: Output::new(change_observer),
+            output: Output::new(output_communicator),
         }
     }
 }
 
 impl<I> Node for ValueUpdateNode<I>
 where
-    I: Clone + Send,
+    I: Clone,
+    I: fmt::Debug,
+    I: FromStr,
+    I: Send + 'static,
 {
     fn on_update(&mut self) -> Result<(), UpdateError> {
-        self.output.clone().send(self.value.clone())?;
+        self.output.send(self.value.clone())?;
         Ok(())
     }
 }
