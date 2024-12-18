@@ -145,8 +145,16 @@ where
         Ok(())
     }
 
-    fn update_controller(&self) -> Option<Box<dyn flowrs::node::UpdateController>> {
-        None
+    // fn update_controller(&self) -> Option<Box<dyn flowrs::node::UpdateController>> {
+    //     None
+    // }
+
+    fn get_input_count(&self) -> u128 {
+        2
+    }
+
+    fn get_output_count(&self) -> u128 {
+        1
     }
 }
 

@@ -55,6 +55,14 @@ where
             .map_err(|e| ReadyError::Other(e.into()))?;
         Ok(())
     }
+
+    fn get_input_count(&self) -> u128 {
+        0
+    }
+
+    fn get_output_count(&self) -> u128 {
+        1
+    }
 }
 
 //#[derive(RuntimeConnectable)]
@@ -102,5 +110,13 @@ where
     fn on_update(&mut self) -> Result<(), UpdateError> {
         self.output.send(self.value.clone())?;
         Ok(())
+    }
+
+    fn get_input_count(&self) -> u128 {
+        0
+    }
+
+    fn get_output_count(&self) -> u128 {
+        1
     }
 }
