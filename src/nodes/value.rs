@@ -1,56 +1,61 @@
 use std::fmt;
 use std::str::FromStr;
 
-use flowrs::comm::communication::NodeCommunicator;
+use flowrs::connection::EdgeTrait;
+use flowrs::nodes::node_io::NodeIO;
+use flowrs::nodes::node_io::SetupInputsSync;
+use flowrs::nodes::node_io::SetupOutputsSync;
 //use flowrs::RuntimeConnectable;
 use flowrs::{
     connection::Output,
     node::{Node, ReadyError, UpdateError},
 };
-
 //#[derive(RuntimeConnectable)]
-pub struct ValueNode<I>
+pub struct ValueNode<O>
 where
-    I: Clone,
-    I: fmt::Debug,
-    I: FromStr,
+    O: Clone,
+    O: fmt::Debug,
+    O: FromStr,
+    O: Send + 'static,
 {
-    value: I,
+    value: O,
 
     //#[output]
-    pub output: Output<I>,
+    pub io: NodeIO<(), (Output<O>,)>,
 }
 
-impl<I> ValueNode<I>
+impl<O> ValueNode<O>
 where
-    I: Clone,
-    I: fmt::Debug,
-    I: FromStr,
-    I: Send + 'static,
+    O: Clone,
+    O: fmt::Debug,
+    O: FromStr,
+    O: Send + 'static,
 {
-    // pub fn new(value: I, change_observer: Option<&ChangeObserver>) -> Self {
+    // pub fn new(value: O, change_observer: Option<&ChangeObserver>) -> Self {
     //     Self {
     //         value,
     //         output: Output::new(change_observer),
     //     }
     // }
-    pub fn new(value: I, output_communicator: NodeCommunicator<I>) -> Self {
+    pub fn new(value: O) -> Self {
         Self {
             value,
-            output: Output::new(output_communicator),
+            io: NodeIO::new((), (Output::new_local(),)),
         }
     }
 }
 
-impl<I> Node for ValueNode<I>
+impl<O> Node for ValueNode<O>
 where
-    I: Clone,
-    I: fmt::Debug,
-    I: FromStr,
-    I: Send + 'static,
+    O: Clone,
+    O: fmt::Debug,
+    O: FromStr,
+    O: Send + 'static,
 {
     fn on_ready(&mut self) -> Result<(), ReadyError> {
-        self.output
+        self.io
+            .outputs
+            .0
             .send(self.value.clone())
             .map_err(|e| ReadyError::Other(e.into()))?;
         Ok(())
@@ -63,52 +68,60 @@ where
     fn get_output_count(&self) -> u128 {
         1
     }
+
+    fn setup_input(&mut self, idx: u128, local: bool) {
+        self.io.inputs.setup_input_sync(idx, local)
+    }
+
+    fn setup_output(&mut self, idx: u128, local: bool) {
+        self.io.outputs.setup_output_sync(idx, local);
+    }
 }
 
 //#[derive(RuntimeConnectable)]
-pub struct ValueUpdateNode<I>
+pub struct ValueUpdateNode<O>
 where
-    I: Clone,
-    I: fmt::Debug,
-    I: FromStr,
-    I: Send + 'static,
+    O: Clone,
+    O: fmt::Debug,
+    O: FromStr,
+    O: Send + 'static,
 {
-    value: I,
+    value: O,
 
     //#[output]
-    pub output: Output<I>,
+    io: NodeIO<(), (Output<O>,)>,
 }
 
-impl<I> ValueUpdateNode<I>
+impl<O> ValueUpdateNode<O>
 where
-    I: Clone,
-    I: fmt::Debug,
-    I: FromStr,
-    I: Send + 'static,
+    O: Clone,
+    O: fmt::Debug,
+    O: FromStr,
+    O: Send + 'static,
 {
-    // pub fn new(value: I, change_observer: Option<&ChangeObserver>) -> Self {
+    // pub fn new(value: O, change_observer: Option<&ChangeObserver>) -> Self {
     //     Self {
     //         value,
     //         output: Output::new(change_observer),
     //     }
     // }
-    pub fn new(value: I, output_communicator: NodeCommunicator<I>) -> Self {
+    pub fn new(value: O) -> Self {
         Self {
             value,
-            output: Output::new(output_communicator),
+            io: NodeIO::new((), (Output::new_local(),)),
         }
     }
 }
 
-impl<I> Node for ValueUpdateNode<I>
+impl<O> Node for ValueUpdateNode<O>
 where
-    I: Clone,
-    I: fmt::Debug,
-    I: FromStr,
-    I: Send + 'static,
+    O: Clone,
+    O: fmt::Debug,
+    O: FromStr,
+    O: Send + 'static,
 {
     fn on_update(&mut self) -> Result<(), UpdateError> {
-        self.output.send(self.value.clone())?;
+        self.io.outputs.0.send(self.value.clone())?;
         Ok(())
     }
 
@@ -118,5 +131,13 @@ where
 
     fn get_output_count(&self) -> u128 {
         1
+    }
+
+    fn setup_input(&mut self, _idx: u128, _local: bool) {
+        //self.io.inputs.setup_input(idx, local)
+    }
+
+    fn setup_output(&mut self, idx: u128, local: bool) {
+        self.io.outputs.setup_output_sync(idx, local);
     }
 }

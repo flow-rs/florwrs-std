@@ -1,10 +1,9 @@
 use super::binops::BinOpState;
-use crate::handle_sequentially;
+//use crate::handle_sequentially;
 use flowrs::{
-    comm::communication::NodeCommunicator,
-    connection::{Input, Output},
+    connection::{EdgeTrait, Input, Output},
     node::{Node, UpdateError},
-    //RuntimeConnectable,
+    nodes::node_io::{NodeIO, SetupInputsSync, SetupOutputsSync},
 };
 use std::{fmt, ops::Add, str::FromStr};
 
@@ -14,21 +13,20 @@ where
     I1: Clone,
     I1: fmt::Debug,
     I1: FromStr,
+    I1: Add<I2, Output = O>,
+    I1: Send + 'static,
     I2: Clone,
     I2: fmt::Debug,
     I2: FromStr,
+    I2: Send + 'static,
     O: Clone,
     O: fmt::Debug,
     O: FromStr,
+    O: Send + 'static,
 {
     state: BinOpState<I1, I2>,
 
-    //#[input]
-    pub input_1: Input<I1>,
-    //#[input]
-    pub input_2: Input<I2>,
-    //#[output]
-    pub output_1: Output<O>,
+    io: NodeIO<(Input<I1>, Input<I2>), (Output<O>,)>,
 }
 
 impl<I1, I2, O> AddNode<I1, I2, O>
@@ -56,16 +54,13 @@ where
     //     }
     // }
 
-    pub fn new(
-        input_1_communicator: NodeCommunicator<I1>,
-        input_2_communicator: NodeCommunicator<I2>,
-        output_communicator: NodeCommunicator<O>,
-    ) -> Self {
+    pub fn new() -> Self {
         Self {
+            io: NodeIO::new(
+                (Input::new_local(), Input::new_local()),
+                (Output::new_local(),),
+            ),
             state: BinOpState::None,
-            input_1: Input::new(input_1_communicator),
-            input_2: Input::new(input_2_communicator),
-            output_1: Output::new(output_communicator),
         }
     }
 
@@ -79,7 +74,7 @@ where
             BinOpState::I2(i) => {
                 let out = v + i.clone();
                 self.state = BinOpState::None;
-                self.output_1.send(out)?;
+                self.io.outputs.0.send(out)?;
             }
             BinOpState::None => self.state = BinOpState::I1(v),
         }
@@ -96,7 +91,7 @@ where
             BinOpState::I1(i) => {
                 let out = i.clone() + v;
                 self.state = BinOpState::None;
-                self.output_1.send(out)?;
+                self.io.outputs.0.send(out)?;
             }
             BinOpState::None => self.state = BinOpState::I2(v),
         }
@@ -120,7 +115,34 @@ where
     O: FromStr,
     O: Send + 'static,
 {
-    handle_sequentially!(input_1, input_2, handle_1, handle_2);
+    fn on_update(&mut self) -> anyhow::Result<(), UpdateError> {
+        match self.state {
+            super::binops::BinOpState::I1(_) => {
+                if let Ok(i2) = self.io.inputs.0.next() {
+                    self.handle_1(i2)?;
+                }
+            }
+            _ => {
+                if let Ok(i1) = self.io.inputs.1.next() {
+                    self.handle_2(i1)?;
+                }
+            }
+        }
+        // The functionality is repeated to handle two inputs per epoche
+        match self.state {
+            super::binops::BinOpState::I1(_) => {
+                if let Ok(i2) = self.io.inputs.0.next() {
+                    self.handle_1(i2)?;
+                }
+            }
+            _ => {
+                if let Ok(i1) = self.io.inputs.1.next() {
+                    self.handle_2(i1)?;
+                }
+            }
+        }
+        Ok(())
+    }
 
     fn set_execution_mode(
         &mut self,
@@ -150,41 +172,41 @@ where
     // }
 
     fn get_input_count(&self) -> u128 {
-        2
+        2 // Two inputs
     }
 
     fn get_output_count(&self) -> u128 {
-        1
+        1 // One output
+    }
+
+    fn setup_input(&mut self, idx: u128, local: bool) {
+        self.io.inputs.setup_input_sync(idx, local);
+    }
+
+    fn setup_output(&mut self, idx: u128, local: bool) {
+        self.io.outputs.setup_output_sync(idx, local);
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use flowrs::{comm::thread_communicator::ThreadCommunicator, node::UpdateError};
+    use flowrs::{
+        comm::{communication::NodeCommunicator, thread_communicator::ThreadCommunicator},
+        node::UpdateError,
+    };
 
     use super::*;
 
     #[test]
     fn should_add_132() -> Result<(), UpdateError> {
-        // Set up communicators
-        let i1_comm = NodeCommunicator::ThreadComm(
-            ThreadCommunicator::<i32>::new().expect("should construct"),
-        );
-        let i2_comm = NodeCommunicator::ThreadComm(
-            ThreadCommunicator::<i32>::new().expect("should construct"),
-        );
-        let o_comm = NodeCommunicator::ThreadComm(
-            ThreadCommunicator::<i32>::new().expect("should construct"),
-        );
-        // Create AddNode
-        let mut add: AddNode<i32, i32, i32> = AddNode::new(i1_comm, i2_comm, o_comm);
-        //flowrs::connection::connect(add.output_1.clone(), mock_output.clone());
-        add.input_1.send(1)?;
-        add.input_2.send(2)?;
+        // Create AddNode (using default local communication)
+        let mut add: AddNode<i32, i32, i32> = AddNode::new();
+        add.io.inputs.0.send(1)?;
+        add.io.inputs.1.send(2)?;
         add.on_update()?;
 
         let expected = 3;
-        let actual = add.output_1.next()?;
+        let actual = add.io.outputs.0.next()?;
         Ok(assert_eq!(expected, actual))
     }
 
